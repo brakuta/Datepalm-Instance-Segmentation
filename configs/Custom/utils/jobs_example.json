@@ -1,0 +1,62 @@
+{
+  "_comment": [
+    "Job file for image_vector_to_labelme_pipeline.py. Copy, edit paths, run:",
+    "  python configs/Custom/utils/image_vector_to_labelme_pipeline.py \\",
+    "      --jobs my_jobs.json --out /path/to/tiles --dry-run",
+    "",
+    "Nothing sensor-specific belongs here. Tile size, training overlap, the",
+    "sliver floor and band selection are derived from each mosaic's own GSD",
+    "and band count, so UAV 5 cm and WorldView-3 30 cm use the same file.",
+    "",
+    "Required per job: name, mosaic, shapefile, id_field, and EITHER split",
+    "(fixed 'train'/'val'/'test') OR split_shapefile + split_field.",
+    "Optional per job: layer, split_layer, class_name, overlap, bands,",
+    "min_visible_area_m2 -- each overrides the derived value for that job only.",
+    "",
+    "Relative paths resolve against this file's directory, which keeps a job",
+    "file portable between the Windows share and the Linux container."
+  ],
+
+  "jobs": [
+    {
+      "name": "WV3_Ajman",
+      "mosaic": "Wordview3/Ajman_WV3_2021_30cm.tif",
+      "shapefile": "National_DatePalm_Mapping.gdb",
+      "layer": "WV3_Datepalm_Ajman_Fuj",
+      "id_field": "auto",
+      "split_shapefile": "Area_Datepalm/Datepalm_WV3_Area.shp",
+      "split_field": "Task"
+    },
+    {
+      "name": "WV3_Fujairah",
+      "mosaic": "Wordview3/Kalba_WV3_2022_30cm.tif",
+      "shapefile": "National_DatePalm_Mapping.gdb",
+      "layer": "WV3_Datepalm_Ajman_Fuj",
+      "id_field": "auto",
+      "split_shapefile": "Area_Datepalm/Datepalm_WV3_Area.shp",
+      "split_field": "Task"
+    },
+
+    {
+      "_note": "A different sensor needs no extra settings -- only paths.",
+      "name": "UAV_Liwa",
+      "mosaic": "UAV/Liwa_UAV_2023_5cm.tif",
+      "shapefile": "National_DatePalm_Mapping.gdb",
+      "layer": "UAV_Datepalm",
+      "id_field": "auto",
+      "split_shapefile": "Area_Datepalm/Datepalm_UAV_Area.shp",
+      "split_field": "Task"
+    },
+
+    {
+      "_note": "Explicit bands only for a non-RGB composite, e.g. NIR-R-G.",
+      "name": "WV3_NIR_example",
+      "mosaic": "Wordview3/Some_8band_WV3.tif",
+      "shapefile": "National_DatePalm_Mapping.gdb",
+      "layer": "WV3_Datepalm_Ajman_Fuj",
+      "id_field": "auto",
+      "split": "test",
+      "bands": [5, 3, 2]
+    }
+  ]
+}

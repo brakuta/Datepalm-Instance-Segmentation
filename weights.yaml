@@ -1,0 +1,276 @@
+# =========================================================================
+# weights.yaml -- every model weight this project loads, and where it comes
+# from.
+# =========================================================================
+# WHY NO WEIGHTS ARE REDISTRIBUTED
+#   Pretrained ImageNet weights belong to their authors under their own
+#   licences. This file records each one precisely enough to obtain the
+#   IDENTICAL file from its official source and prove it is identical --
+#   which is what reproducibility requires, and redistribution is not.
+#
+# TWO KINDS OF FILE, AND THE DIFFERENCE MATTERS
+#   upstream  -- downloaded unchanged from the authors. Obtainable by
+#                anyone, forever, as long as the source exists.
+#   derived   -- produced ON THIS PROJECT'S MACHINE from an upstream file
+#                by a script in this repository. NOT downloadable from
+#                anywhere. If lost, they must be regenerated, and the
+#                command that regenerates them is recorded below.
+#
+#   Confusing the two is how a "just download the weights" instruction
+#   fails six months later on a file that was never on the internet.
+#
+# A LICENCE FILE COVERS THE REPOSITORY, NOT NECESSARILY THE WEIGHTS
+#   Each `licence:` below was read from the upstream clone's own LICENSE
+#   file. That governs the CODE. Release-asset weights are usually taken to
+#   fall under the same terms, but several of these projects do not say so
+#   explicitly. Where a paper needs to state the terms of the weights
+#   specifically, confirm on the project's release page rather than
+#   inferring it from the repository licence.
+#
+# MATCH BY HASH, NOT BY FILENAME
+#   Several upstream files were renamed locally. The SHA256 is the identity;
+#   the filename is a convenience.
+#
+# FILLING IN THE UNKNOWNs
+#   sha256:  capture_environment.py already hashes every weight file. Read
+#            them out of env_capture/environment.json rather than re-hashing.
+#   url:     do NOT guess. The authoritative source is the clone already on
+#            the machine:
+#                for d in /opt/*/; do echo "$d"; git -C "$d" remote -v | head -1; \
+#                    git -C "$d" rev-parse HEAD; done
+#            That gives the exact repository and the exact commit the code
+#            was written against. Take the release asset URL from that
+#            repository's own README or releases page.
+# =========================================================================
+
+schema_version: 1
+last_verified: "2026-08-31"
+
+# -------------------------------------------------------------------------
+# UPSTREAM -- obtain from the author, verify by hash
+# -------------------------------------------------------------------------
+upstream:
+
+  - name: VMamba-S (ImageNet-1k)
+    local_filename: vmamba/vmamba_small_imagenet1k.pth
+    used_by: maskrcnn_vmamba_s_*
+    repository: "https://github.com/MzeroMiko/VMamba.git"
+    commit: "2ed52ead062a51a64521ed3871d52914bf532876"          # `git -C /opt/vmamba rev-parse HEAD`
+    asset_url: UNKNOWN
+    sha256: "c540366e366d81acf69251810e7ea7268e0ca8bcb6843f3b773c1f0105bd30cb"
+    licence: "MIT (Copyright (c) 2024 MzeroMiko)"
+    licence_source: "/opt/vmamba/LICENSE, read at the pinned commit"
+
+  - name: Spatial-Mamba-S (ImageNet-1k)
+    local_filename: spatialmamba/spatialmamba_small_in1k.pth
+    used_by: maskrcnn_spatialmamba_s_*   # includes the DEPLOYED model
+    repository: "https://github.com/EdwardChasel/Spatial-Mamba.git"
+    commit: "f72ed9b2486a5931190912dcfa8b964033c80e8c"
+    asset_url: UNKNOWN
+    sha256: "c7320bb936f08712cda32a9733f97e1156192e872901e036c4c23158a9630034"
+    licence: "Apache-2.0"
+    licence_source: "/opt/spatial_mamba/LICENSE, read at the pinned commit"
+
+  - name: GroupMamba-S (ImageNet-1k)
+    local_filename: groupmamba/groupmamba_small.pth
+    used_by: maskrcnn_groupmamba_s_*
+    repository: "https://github.com/Amshaker/GroupMamba.git"
+    commit: "c1800ed262e995de3c645348e7e0202e8385f334"
+    asset_url: UNKNOWN
+    sha256: "470bf546734d5379696d3093f9dc59fd59920f91e374529b72e7897b3f3dae54"
+    licence: "MIT (Copyright (c) 2024 Abdelrahman Shaker)"
+    licence_source: "/opt/groupmamba/LICENSE, read at the pinned commit"
+
+  - name: EfficientVMamba-B (ImageNet-1k)
+    local_filename: efficientvmamba/efficient_vmamba_base.ckpt
+    used_by: maskrcnn_efficientvmamba_b_*
+    repository: "https://github.com/TerryPei/EfficientVMamba.git"
+    commit: "0bc5ee288b402d648641f5494b73e9d152e0c62b"
+    asset_url: UNKNOWN
+    sha256: "5ad77a38bdc793a81d4ccaff29c3c2706462443b929f957ebe5086d30383593d"
+    licence: NONE_FOUND
+    licence_source: >-
+      /opt/efficientvmamba contains NO file matching "licen" at the pinned
+      commit 0bc5ee28. The other three clones all carry a LICENSE; this one
+      does not.
+    licence_warning: >-
+      A repository published without a licence is "all rights reserved" by
+      default -- permission to use, modify or redistribute is not granted
+      merely because the code is public. This does not affect having USED it
+      for research, and it is not a claim that anything improper happened.
+      It does affect two things: describing this dependency's terms in the
+      paper, and any statement in the public repository about what a reader
+      may do with it. Check the project's current page before publishing --
+      a licence may have been added after commit 0bc5ee28 -- and if there
+      is still none, say "no licence stated by the authors" rather than
+      implying one.
+
+  - name: MambaVision-S
+    # MEASURED from the config's own log line, 2026-08-31:
+    #   [MambaVision] Loading: nvidia/MambaVision-S-1K | pretrained=True
+    local_filename: "(none -- fetched from HuggingFace at model-build time)"
+    used_by: maskrcnn_mambavision_s_*
+    huggingface_id: "nvidia/MambaVision-S-1K"
+    # The wrapper also maps T and B, unused here:
+    #   nvidia/MambaVision-T-1K, nvidia/MambaVision-B-1K
+    repository: UNKNOWN      # pip package `mambavision`; source repo not pinned
+    commit: UNKNOWN
+    asset_url: UNKNOWN
+    sha256: UNKNOWN
+    status: >-
+      RESOLVED. It failed to build once on 2026-08-31 with a HuggingFace
+      connectivity error, and I recorded a gated repository as a possible
+      cause. It was not that: the original image's cache holds
+      models--nvidia--MambaVision-S-1K, so these weights were fetched
+      successfully on this machine. The failure was caused by deleting
+      /root/.cache while slimming the image, plus a fetch that did not
+      succeed at that moment. The cache-preserving export
+      (mamba_slim_hf.tar) contains the weights and needs no network.
+    licence: >-
+      NVIDIA Source Code License, NON-COMMERCIAL. Referenced and configured
+      here; NOT redistributed. Obtain from NVIDIA under that licence. This
+      restriction does not apply to the other backbones and must not be
+      described as if it did.
+
+  - name: MambaOut-S
+    # MEASURED from mmdet/models/backbones/mambaout_backbone.py, which maps
+    # size -> timm id: tiny/small/base -> mambaout_{size}.in1k
+    local_filename: "(none -- fetched from HuggingFace via timm at build time)"
+    used_by: maskrcnn_mambaout_s_*
+    huggingface_id: "timm/mambaout_small.in1k"
+    loaded_via: "timm.create_model('mambaout_small.in1k', pretrained=True)"
+    repository: UNKNOWN      # upstream MambaOut project; weights are republished by timm
+    commit: UNKNOWN
+    sha256: UNKNOWN          # downloaded 194 MB in the smoke test; not hashed
+    licence: UNKNOWN
+    note: >-
+      MambaOut is NOT a state-space model despite the name -- it is the
+      ablation that REMOVES the SSM. If the manuscript groups it with the
+      Mamba family, that is a mislabel; it belongs with the CNN/gated-conv
+      baselines.
+
+  - name: ResNet-50 / ResNet-101
+    local_filename: (none -- fetched at runtime)
+    used_by: maskrcnn_r50_*, maskrcnn_r101_*
+    asset_url: "torchvision://resnet50, torchvision://resnet101"
+    note: >-
+      Resolved by torchvision at run time and cached under ~/.cache/torch.
+      No local file to archive, but also nothing to lose.
+    licence: BSD-3-Clause (torchvision)
+
+  - name: Swin-S / ConvNeXt-T / PVTv2-B2
+    local_filename: see derived/ below
+    note: >-
+      The ORIGINAL upstream files are standard MMPreTrain/timm ImageNet
+      checkpoints. What this project loads are the derived, stripped
+      versions listed below, not the originals.
+    licence: Apache-2.0 (OpenMMLab) -- confirm per file
+
+# -------------------------------------------------------------------------
+# FETCHED AT RUN TIME FROM HUGGINGFACE -- not archived, needs internet
+# -------------------------------------------------------------------------
+# MambaVision and MambaOut do not read a local checkpoint. They resolve a
+# HuggingFace model id when the model is BUILT, and cache it under
+# ~/.cache/huggingface.
+#
+# Two consequences, both measured on 2026-08-31:
+#
+#   1. Building either model on a machine with no internet fails, with an
+#      error about connectivity rather than about a missing weight file.
+#
+#   2. The slim exported image has NO HuggingFace cache: building it deleted
+#      /root/.cache to save space. That was the right trade for a 17.6 GB
+#      artefact, but it means the first build of these two models on a
+#      restored image downloads again. Everything else loads from
+#      checkpoints/ and is fully offline.
+#
+# RESOLVED 2026-08-31. The original image's /root/.cache is 3.3 GB and
+# already holds all four:
+#     models--nvidia--MambaVision-S-1K
+#     models--nvidia--MambaVision-T-1K
+#     models--timm--mambaout_small.in1k
+#     models--timm--mambaout_tiny.in1k
+# So no warming step was needed -- only NOT deleting the cache. The export
+# that preserves it (mamba_slim_hf.tar, ~21 GB) is fully offline for all
+# eleven backbones; the first slim tar (17.6 GB) is offline for nine and
+# re-downloads these two.
+#
+# The lesson generalises: when slimming an image, /root/.cache is not
+# obviously disposable. Check what is in it before deleting it.
+huggingface_runtime:
+  - model: MambaVision-S
+    id: "nvidia/MambaVision-S-1K"
+  - model: MambaOut-S
+    id: "timm/mambaout_small.in1k"
+
+# -------------------------------------------------------------------------
+# DERIVED -- produced here. Not downloadable. Regenerate if lost.
+# -------------------------------------------------------------------------
+derived:
+
+  - local_filename: checkpoints/swin_small_p4_w7_backbone_only.pth
+    from: upstream Swin-S ImageNet checkpoint
+    why: >-
+      Detection configs load a backbone, not a classifier. The classification
+      head in the upstream file produces a long list of unexpected-key
+      warnings at load time that hide real ones.
+    regenerate: UNKNOWN     # record the exact command used
+    sha256: "b93bf7a659117653fd467f170aa4ded2be82a597dbf2a38611a4f4a867599dae"
+
+  - local_filename: checkpoints/convnext_tiny_backbone_only.pth
+    from: upstream ConvNeXt-T ImageNet checkpoint
+    why: as above
+    regenerate: UNKNOWN
+    sha256: "93498d37bb282a7409f16f5d168e16aed78f57042bf2700fb8ec6ae097409343"
+
+  - local_filename: checkpoints/pvtv2_b2_backbone_only.pth
+    from: upstream PVTv2-B2 ImageNet checkpoint
+    why: as above
+    regenerate: UNKNOWN
+    sha256: "2c1cf2d1a60b2828738006eda6c592ce0ad79261b5b366aebee20a4100ae5fdb"
+
+  - local_filename: checkpoints/swin_small_p4_w7_mmdet.pth
+    from: upstream Swin-S
+    why: key names remapped into the MMDetection backbone namespace
+    regenerate: UNKNOWN
+    sha256: "fac17b0c81ee540e2c2f83a3c68c3722533a881184480f5076a53f916c5b9ef0"
+
+  - local_filename: checkpoints/swin_small_p4_w7_8band.pth
+    from: checkpoints/swin_small_p4_w7_mmdet.pth
+    why: >-
+      Multispectral runs take 8 input channels. The 3-channel ImageNet stem
+      is widened so the run still starts from pretrained weights instead of
+      from scratch.
+    regenerate: python configs/Custom/tools_staged/inflate_stem_to_nband.py
+    sha256: "f7a83af5c65315bc2700d7bb041690325fe8a11dde834fb1880b43cf27329226"
+
+  - local_filename: checkpoints/swin_small_p4_w7_mmdet_4band.pth
+    from: checkpoints/swin_small_p4_w7_mmdet.pth
+    why: as above, 4 channels
+    regenerate: python configs/Custom/tools_staged/inflate_stem_to_nband.py
+    sha256: NOT_PRESENT
+    status: >-
+      NOT PRESENT on disk as of 2026-08-31, and nothing requires it. The
+      only reference is a usage example in inflate_stem_to_nband.py's own
+      header; no config loads it. Listed here so its absence is understood
+      rather than investigated later as a missing dependency.
+
+  - local_filename: checkpoints/convnext_tiny_8band.pth
+    from: upstream ConvNeXt-T
+    why: as above, 8 channels
+    regenerate: python configs/Custom/tools_staged/inflate_stem_to_nband.py
+    sha256: "1d716bcdebae95c20c2767b5a100cedfe62318ed7138e2c9eacafca64a0f1dfd"
+
+# -------------------------------------------------------------------------
+# TRAINED IN THIS PROJECT -- not published
+# -------------------------------------------------------------------------
+project_trained:
+  count: 70
+  total_size_gb: 24
+  published: false
+  note: >-
+    The checkpoints this project trained are not distributed with the public
+    repository. Every config needed to retrain them is. The deployed model
+    used for the country-scale inventory is identified in FACTS.yml by
+    SHA256 so a recipient holding the archive can confirm they have the
+    right one.
