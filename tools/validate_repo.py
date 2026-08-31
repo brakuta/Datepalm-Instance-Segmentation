@@ -17,6 +17,15 @@ WHY THIS EXISTS
                         nothing said so until someone tried.
     doc_links           A README named files that were absent -- the
                         installation verifier and the build recipe.
+    doc_paths           Commands and examples in READMEs, shell scripts and
+                        docstrings referenced experiment folders by their
+                        pre-publication names. Markdown links resolved, but
+                        every copy-pasteable command failed. This check
+                        walks path-like tokens everywhere doc_links cannot
+                        see: fenced code, .sh files, .py strings.
+    custom_imports      Configs declared custom_imports modules that no
+                        published file provided. The _base_ chain resolved,
+                        so nothing else caught it.
     no_private_paths    A base config edited away from upstream carried
                         absolute paths from an unrelated project, plus a
                         username in a comment.
@@ -48,7 +57,8 @@ PRIVATE = [
 ALLOW = re.compile(r'https?://|/path/to/|<[a-z_ -]+>|noqa:\s*leakscan', re.I)
 
 ARTEFACTS = ('*.pth', '*.ckpt', '*.pkl', '*.npy', '*.tif', '*.tiff',
-             '*.gpkg', '*.shp', '*.pyc')
+             '*.gpkg', '*.shp', '*.dbf', '*.shx', '*.prj', '*.cpg',
+             '*.parquet', '*.png', '*.jpg', '*.jpeg', '*.pyc')
 
 TEXT = ('.py', '.md', '.txt', '.yaml', '.yml', '.json', '.sh', '.cff')
 
@@ -83,6 +93,72 @@ def doc_links():
     return f'{n} relative links', bad
 
 
+# Path-like tokens in prose, commands and docstrings. Everything doc_links
+# cannot see: fenced code blocks, shell scripts, Python strings. A token is
+# checked up to its first placeholder character (*, ?, <, {, $), so
+# `configs/Custom/x/maskrcnn_${BB}.py` still verifies that the directory
+# exists even though the filename is templated.
+PATHLIKE = re.compile(
+    r'(?<![\w/.-])((?:configs/Custom|configs/_base_|tools|'
+    r'mmdet/models|palm_inference|docker)/'
+    r'[A-Za-z0-9_${}*?<>./-]+)')
+PLACEHOLDER = re.compile(r'[*?<{$]')
+DOC_PATH_EXT = ('.md', '.sh', '.py', '.txt', '.yaml', '.yml')
+# Files a documented command generates rather than the repository shipping
+# them. Referring to one by its intended path is correct, not a dead link.
+GENERATED = {
+    'configs/Custom/Feature_Analysis/config_feature_analysis.json',
+}
+
+
+def doc_paths():
+    """Every repo-path-like token in docs, scripts and docstrings exists."""
+    bad, n = [], 0
+    for f in ROOT.rglob('*'):
+        if '.git' in f.parts or not f.is_file() or f.suffix not in DOC_PATH_EXT:
+            continue
+        if f.name == 'validate_repo.py':
+            continue
+        for i, line in enumerate(f.read_text(errors='replace').splitlines(), 1):
+            for token in PATHLIKE.findall(line):
+                token = token.rstrip('.,;:')
+                if token in GENERATED:
+                    continue
+                m = PLACEHOLDER.search(token)
+                if m:
+                    # Templated: require the deepest literal directory.
+                    literal = token[:m.start()]
+                    target = (ROOT / literal).parent if not literal.endswith('/') \
+                        else ROOT / literal.rstrip('/')
+                else:
+                    target = ROOT / token
+                n += 1
+                if not target.exists():
+                    bad.append(f'{f.relative_to(ROOT)}:{i} -> {token}')
+    return f'{n} path tokens', bad
+
+
+def custom_imports():
+    """Every custom_imports module a config declares is a published file."""
+    bad, n = [], 0
+    for cfg in (ROOT / 'configs').rglob('*.py'):
+        m = re.search(r'custom_imports\s*=\s*dict\s*\(\s*imports\s*=\s*\[(.*?)\]',
+                      cfg.read_text(errors='replace'), re.S)
+        if not m:
+            continue
+        for mod in re.findall(r"'([^']+)'", m.group(1)):
+            # configs.* and the *_backbone wrappers must be published here;
+            # anything else under mmdet.* ships with the installed package.
+            if not (mod.startswith(('configs.', 'palm_inference.'))
+                    or (mod.startswith('mmdet.')
+                        and mod.rsplit('.', 1)[-1].endswith('_backbone'))):
+                continue
+            n += 1
+            if not (ROOT / (mod.replace('.', '/') + '.py')).exists():
+                bad.append(f'{cfg.relative_to(ROOT)} -> {mod}')
+    return f'{n} custom imports', bad
+
+
 def no_private_paths():
     bad, n = [], 0
     for f in ROOT.rglob('*'):
@@ -115,6 +191,8 @@ def no_artefacts():
 CHECKS = [
     ('config inheritance', config_inheritance),
     ('documentation links', doc_links),
+    ('documentation paths', doc_paths),
+    ('custom imports resolve', custom_imports),
     ('no private paths', no_private_paths),
     ('no data artefacts', no_artefacts),
 ]

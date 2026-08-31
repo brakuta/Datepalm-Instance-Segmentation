@@ -28,8 +28,17 @@ results/
 *.tiff
 *.gpkg
 *.shp
+*.dbf
+*.shx
+*.prj
+*.cpg
 *.parquet
 _manifest.parquet
+
+# Imagery tiles -- never commit these
+*.png
+*.jpg
+*.jpeg
 
 # Editors and OS
 .vscode/

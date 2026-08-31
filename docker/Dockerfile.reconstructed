@@ -160,6 +160,15 @@ RUN cd /opt/spatial_mamba/kernels/selective_scan \
 # built, found by `docker diff`. It is the only genuine drift in six days.
 RUN pip install ptflops==0.7.5
 
+# ---- THIS REPOSITORY --------------------------------------------------------
+# The configs import the backbone wrappers as mmdet.models.backbones.*, which
+# requires the wrapper modules to live INSIDE the installed mmdet package.
+# The original environment ran mmdet from a full source checkout that carried
+# them; the pip install above does not. install_backbones.py copies them in.
+RUN git clone https://github.com/brakuta/Datepalm-Instance-Segmentation.git \
+        /workspace/Datepalm-Instance-Segmentation \
+    && python /workspace/Datepalm-Instance-Segmentation/tools/install_backbones.py
+
 # PYTHONPATH carries only three of the seven trees. That is correct and not an
 # oversight: the wrappers for vmamba, groupmamba and efficientvmamba insert
 # their own paths at import time. Do not "fix" it by adding them -- vmamba and
@@ -167,5 +176,15 @@ RUN pip install ptflops==0.7.5
 # PYTHONPATH makes which one wins depend on import order.
 ENV PYTHONPATH=/opt/vim:/opt/spatial_mamba:/opt/vssd:
 
-WORKDIR /workspace
+WORKDIR /workspace/Datepalm-Instance-Segmentation
 CMD ["/bin/bash"]
+
+# RUNNING THE CONTAINER
+#   docker run --gpus all -it --shm-size=16g \
+#       -v /path/to/datasets:/workspace/datasets \
+#       -v /path/to/checkpoints:/workspace/mmdetection/checkpoints \
+#       mamba-mmdet:rebuilt
+#   The dataset configs expect COCO trees under /workspace/datasets/COCO/
+#   (see configs/Custom/_base_palm/) -- mount your data there or edit
+#   data_root. --shm-size matters: the default 64 MB starves the dataloader
+#   workers.
