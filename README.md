@@ -1,113 +1,123 @@
-# Date-palm instance segmentation with state-space backbones
+# Date-palm instance segmentation across sensors and scales
 
-Code for the experiments reported in the accompanying manuscript: a
-benchmark of CNN, transformer and state-space (Mamba-family) backbones for
-date-palm crown instance segmentation in very-high-resolution imagery, and
-the country-scale inventory built from the best of them.
+Mask R-CNN with eleven interchangeable backbones — CNN, transformer and
+state-space (Mamba-family) — trained and evaluated on date-palm crown
+delineation in imagery from **5 cm UAV down to 30 cm satellite**, and the
+adaptation that turned the best of them into a country-scale inventory.
 
-This repository is a **fork of [MMDetection](https://github.com/open-mmlab/mmdetection) 3.3.0**
-with project-specific configs, backbone wrappers and tooling added.
+A fork of [MMDetection](https://github.com/open-mmlab/mmdetection) 3.3.0
+with project configs, backbone wrappers and tooling added.
 
 ---
 
-## What is here
+## Start here: which experiment do you want?
 
-| path | what it is |
+The work is five experiments, each answering a different question. **Pick
+the row you care about** — you do not need the others.
+
+| | question | imagery | configs |
+|---|---|---|---|
+| **A. Single-sensor** | Which backbone is best when the sensor is fixed? | UAV 5 cm | [`maskrcnn_palm/`](configs/Custom/maskrcnn_palm) |
+| **B. Two-source pooled** | Does pooling two 15 cm sources help? | GE 15 cm + aerial 15 cm | [`maskrcnn_palm_ms15/`](configs/Custom/maskrcnn_palm_ms15) |
+| **C. Three-source unified** | One model for all sensors, or one per sensor? | UAV 5 cm + GE 15 cm + aerial 15 cm | [`maskrcnn_palm_stagec/`](configs/Custom/maskrcnn_palm_stagec) |
+| **D. Satellite transfer** | How far does it carry to 30 cm, and how much labelling does that take? | WorldView-3 30 cm | [`maskrcnn_palm_staged/`](configs/Custom/maskrcnn_palm_staged) |
+| **E. Deployment** | Making it survive contact with a whole country | GE 15 cm, national | [`maskrcnn_palm_finetune_hn/`](configs/Custom/maskrcnn_palm_finetune_hn) |
+
+Each has a dataset definition in
+[`configs/Custom/_base_palm/`](configs/Custom/_base_palm) — `dataset_uav_5cm`,
+`dataset_MS15_pooled`, `dataset_UAV_GE_Aerial_pooled_C`,
+`dataset_sat_30cm_staged`, `dataset_ge30sim`.
+
+---
+
+### A — Single-sensor benchmark (UAV 5 cm)
+
+The controlled comparison: same data, same schedule, same detector, only
+the backbone changes. Both size variants of most families, so scale is a
+visible axis rather than a confound.
+
+```
+maskrcnn_{r50,r101,swin_t,swin_s,convnext_t,pvtv2_b2}_uav5cm.py
+maskrcnn_{vmamba,spatialmamba,groupmamba,efficientvmamba,mambaout,mambavision}_{t,s}_uav5cm.py
+```
+
+### B — Two-source pooled (15 cm)
+
+Trains on Google Earth 15 cm and aerial 15 cm together, validating on GE
+only. Aerial is held out and scored afterwards through a separate
+eval-only config — so "does pooling help?" is answered without the
+validation set choosing the answer.
+
+### C — Three-source unified model
+
+UAV 5 cm, GE 15 cm and aerial 15 cm pooled, with **source-local batch
+construction**: batches are drawn from one source at a time, for page-cache
+locality across three mounts. Eleven backbones. This is the comparison the
+deployed model came from.
+
+### D — Satellite transfer (WorldView-3 30 cm)
+
+The hardest question here, and the one with the most machinery. Four
+config families:
+
+| suffix | what it is |
 |---|---|
-| `configs/Custom/_base_palm/` | shared dataset, schedule and model bases |
-| `configs/Custom/maskrcnn_palm_stagec/` | the 11-backbone benchmark |
-| `configs/Custom/maskrcnn_palm_staged/` | the transfer / budget matrix |
-| `configs/Custom/maskrcnn_palm_finetune_hn/` | hard-negative adaptation and the deployed config |
-| `configs/Custom/Finetune_HN/` | hard-negative mining, threshold calibration, evaluation |
-| `configs/Custom/Evaluation/`, `Feature_Analysis/` | the analyses behind the reported numbers |
-| `configs/Custom/utils/` | dataset construction, inference pipeline, environment checks |
-| `mmdet/models/backbones/` | wrappers for the SSM backbones |
-| `palm_inference/` | the tiled, resumable, georeferenced inference pipeline |
-| `weights.yaml` | every pretrained weight, by official source and SHA256 |
-| `THIRD_PARTY.md` | upstream projects and their licences |
+| `_ge30sim_stage1` | pre-train on **simulated** 30 cm — GE 15 cm downsampled with PSF blur and sensor noise, 19,472 tiles, crowns ~17 px, matching real WV-3 scale |
+| `_staged_ft` | fine-tune on real WV-3 across an **annotation-budget** ladder |
+| `_staged_full` | the full-budget reference point |
+| `_staged_ms` | **multispectral** — 8-band WV-3 rather than RGB |
 
-## What is NOT here, and why
+The budget ladder is nested and seeded (`tools_staged/build_budget_manifests.py`),
+so the 5% subset is contained in the 10%, and "more labels help this much"
+is a measurement rather than an artefact of which tiles were drawn.
 
-**No imagery and no annotations.** The data is licensed to the project and
-cannot be redistributed.
+Multispectral runs widen a 3-channel ImageNet stem to 8 channels
+(`tools_staged/inflate_stem_to_nband.py`) so they still start pretrained.
 
-**No trained checkpoints.** Every config needed to retrain them is here.
+Read [`maskrcnn_palm_staged/STAGE_D_README.md`](configs/Custom/maskrcnn_palm_staged/STAGE_D_README.md)
+before running any of these.
 
-**No pretrained weights.** `weights.yaml` records each one by its official
-source and its SHA256, so the identical file can be obtained from its
-author and verified. Several were renamed locally during the work —
-**match them by hash, not by filename.**
+### E — Deployment and hard-negative adaptation
 
-**Not the Google Earth acquisition tooling.** Withheld at the authors'
-discretion; the imagery it retrieves is subject to the provider's terms.
-Nothing in the modelling code depends on how imagery was obtained — the
-experiments reproduce from any imagery of comparable resolution.
+A benchmark model applied to a whole country meets terrain the training
+set never contained: palm-like shrubs, ghaf, acacia. `_finetune_hn`
+adapts against exactly those false positives, with the original positives
+**replayed alongside** so recall does not quietly collapse.
 
-See `WITHHELD.md` for the complete list.
+`maskrcnn_spatialmamba_s_deploy.py` is the deployed configuration. It
+raises the per-image detection cap, and its header explains why that
+matters only in dense plantations and why validation could not have shown
+it.
 
----
+**This is an operational adaptation, not part of the benchmark.** The
+Stage C checkpoints and their reported numbers are untouched.
 
-## The backbone wrappers contain no architecture code
-
-`mmdet/models/backbones/*_backbone.py` adapt upstream implementations to
-MMDetection's registry. The architectures themselves live in the original
-projects and are **expected at fixed paths**:
-
-```
-/opt/vmamba  /opt/spatial_mamba  /opt/groupmamba  /opt/efficientvmamba
-```
-
-Those paths are hard-coded and the directory names are load-bearing.
-`THIRD_PARTY.md` gives each project's repository and the exact commit this
-work used.
+Supporting tools in [`configs/Custom/Finetune_HN/`](configs/Custom/Finetune_HN):
+hard-negative tile mining, threshold re-calibration, and an evaluation that
+measures false-positive suppression directly — because COCO mAP is close
+to blind to it on tiles with no ground truth.
 
 ---
 
-## Reproducing the environment
+## The backbones
 
-This is the part that is genuinely difficult, so it is stated plainly.
-
-Three dependencies compile CUDA extensions against a specific
-torch/CUDA pair: **`mmcv 2.1.0`** (source-only on PyPI), **`mamba-ssm
-2.2.4`** and **`causal-conv1d 1.4.0`**, plus the SSM projects' own
-`selective_scan` and `dwconv2d` kernels. A version mismatch anywhere in
-that chain fails at import or, worse, at the first GPU kernel launch.
-
-`docker/Dockerfile.reconstructed` is the recipe, pinned to the exact
-commits used. **Order matters** — torch is installed before mmcv, because
-mmcv compiles against whatever torch is present.
-
-The environment was:
-
-| | |
+| family | models |
 |---|---|
-| base | `nvidia/cuda:12.1.0-cudnn8-devel-ubuntu22.04` |
-| python / torch | 3.10.12 / 2.1.0+cu121 |
-| mmengine / mmcv / mmdet | 0.10.1 / 2.1.0 / 3.3.0 |
-| mmpretrain | 1.2.0 |
-| mamba-ssm / causal-conv1d | 2.2.4 / 1.4.0 |
-| GPU used | NVIDIA TITAN RTX (sm_75), 24 GB |
+| CNN | ResNet-50, ResNet-101, ConvNeXt-T |
+| Transformer | Swin-T/S, PVTv2-B2 |
+| State-space | VMamba, Spatial-Mamba, GroupMamba, EfficientVMamba, MambaVision |
+| SSM ablation | **MambaOut** — *removes* the SSM; a control, not a Mamba model |
 
-Two scripts check an installation, and you want both:
-
-```bash
-python configs/Custom/utils/handover_selftest.py     # does it import?
-python configs/Custom/utils/smoke_build_models.py    # do the models RUN?
-```
-
-The first proves imports. The second builds every model and pushes a
-tensor through it — a backbone can import cleanly and still fail on its
-first forward pass, because importing touches Python and a kernel launch
-touches the GPU.
-
-**A note on GPU architecture.** The `dwconv2d` kernel as originally built
-carried `sm_75` only. Rebuild the kernels with a wider
-`TORCH_CUDA_ARCH_LIST` (the Dockerfile does this) or newer cards fail with
-`no kernel image is available for execution on the device`.
+Wrappers live in `mmdet/models/backbones/` and **contain no architecture
+code**. They adapt upstream implementations expected at fixed paths —
+`/opt/vmamba`, `/opt/spatial_mamba`, `/opt/groupmamba`,
+`/opt/efficientvmamba`. Those paths are hard-coded and the directory names
+are load-bearing. [`THIRD_PARTY.md`](THIRD_PARTY.md) gives each project's
+repository and the exact commit used.
 
 ---
 
-## Running inference
+## Running the deployed model
 
 ```bash
 python -m palm_inference.run_inference \
@@ -119,39 +129,101 @@ python -m palm_inference.run_inference \
   --score-thr 0.30 --postprocess
 ```
 
-**The command-line defaults are not the deployment settings.** They
-default to 512 / 128 / 0.35; the deployment used **1024 / 256 / 0.30**.
-A run that omits them succeeds and produces a plausible map that is not
-the reported configuration. Always pass all three, and always
-`--postprocess` — without it, palms straddling tile boundaries are counted
-twice.
+`palm_inference/` is a tiled, **resumable**, georeferenced pipeline:
+it tiles large rasters, runs batched inference, merges and de-duplicates
+across tile boundaries, and writes GeoPackage. An interrupted run resumes
+from its manifest.
 
-Imagery must be georeferenced GeoTIFF at roughly 15 cm/px. At 1 m/px a
-crown is a few pixels across and will not be detected; that is a property
-of the data, not a setting.
+**Three things that silently give wrong answers:**
+
+- **The CLI defaults are not the deployment settings.** They are
+  512 / 128 / 0.35; deployment used **1024 / 256 / 0.30**. Omitting them
+  succeeds and produces a plausible map that is not the reported one.
+- **Without `--postprocess`**, palms straddling tile boundaries are
+  counted twice.
+- **Resolution matters more than any setting.** Trained at ~15 cm/px; at
+  1 m/px a crown is a few pixels across and will not be found.
+
+---
+
+## Reproducing the environment
+
+This is the genuinely hard part, so it is stated plainly.
+
+Three dependencies compile CUDA extensions against a specific torch/CUDA
+pair — **`mmcv 2.1.0`** (source-only on PyPI), **`mamba-ssm 2.2.4`**,
+**`causal-conv1d 1.4.0`** — plus the SSM projects' own `selective_scan`
+and `dwconv2d` kernels. A mismatch anywhere fails at import or, worse, at
+the first GPU kernel launch.
+
+[`docker/Dockerfile.reconstructed`](docker/Dockerfile.reconstructed) is the
+recipe, pinned to the exact commits used. **Order matters**: torch is
+installed before mmcv, because mmcv compiles against whatever torch it
+finds.
+
+| | |
+|---|---|
+| base | `nvidia/cuda:12.1.0-cudnn8-devel-ubuntu22.04` |
+| python / torch | 3.10.12 / 2.1.0+cu121 |
+| mmengine / mmcv / mmdet / mmpretrain | 0.10.1 / 2.1.0 / 3.3.0 / 1.2.0 |
+| mamba-ssm / causal-conv1d | 2.2.4 / 1.4.0 |
+| GPU used | TITAN RTX (sm_75), 24 GB |
+
+**Verify with both, not one:**
+
+```bash
+python configs/Custom/utils/handover_selftest.py     # does it import?
+python configs/Custom/utils/smoke_build_models.py    # do the models RUN?
+```
+
+The first proves imports. The second builds every model and pushes a
+tensor through it. A backbone can import cleanly and fail on its first
+forward pass — importing touches Python, a kernel launch touches the GPU.
+
+**GPU architecture:** `dwconv2d` as originally built carried `sm_75` only.
+Rebuild the kernels with a wider `TORCH_CUDA_ARCH_LIST` (the Dockerfile
+does) or newer cards fail with `no kernel image is available for execution
+on the device`.
 
 ---
 
 ## Building datasets
 
-`configs/Custom/utils/TILING_README.md` documents the full pipeline:
-mosaic + reference polygons → 512 px tiles + LabelMe JSON → COCO.
-
-Annotation format: [LabelMe](https://github.com/wkentaro/labelme).
+[`configs/Custom/utils/TILING_README.md`](configs/Custom/utils/TILING_README.md)
+documents the pipeline: mosaic + reference polygons → 512 px tiles +
+[LabelMe](https://github.com/wkentaro/labelme) JSON → COCO. One job file
+per corpus; tile size, overlap and band selection derive from each
+mosaic's own GSD.
 
 Three policies materially affect results and are explained there: empty
-tiles belong in train and never in val/test; background is capped at 30%
-with a fixed seed; and `filter_empty_gt`'s only symptom is a lower image
-count in the log.
+tiles belong in **train only**, never val or test; background is capped at
+30% with a fixed seed; and `filter_empty_gt`'s only symptom is a lower
+image count in the log.
 
 ---
 
-## Citation
+## What is not here
 
-If you use this code, please cite the manuscript (details to follow on
-publication) and the upstream projects listed in `THIRD_PARTY.md`.
+**No imagery, annotations or trained checkpoints.** The data is licensed
+to the project. Every config needed to retrain is here.
 
-MMDetection itself:
+**No pretrained weights.** [`weights.yaml`](weights.yaml) records each by
+official source and **SHA256**, and separates *upstream* files from
+*derived* ones produced locally that exist nowhere online. Several were
+renamed during the work — **match by hash, not filename**.
+
+**Not the Google Earth acquisition tooling.** Withheld; the imagery is
+subject to the provider's terms. Nothing in the modelling code depends on
+how imagery was obtained.
+
+Full list and reasons: [`WITHHELD.md`](WITHHELD.md).
+
+---
+
+## Citation and licence
+
+Please cite the manuscript (details on publication), MMDetection, and the
+upstream backbone projects in [`THIRD_PARTY.md`](THIRD_PARTY.md).
 
 ```bibtex
 @article{mmdetection,
@@ -162,8 +234,6 @@ MMDetection itself:
 }
 ```
 
-## Licence
-
-Apache-2.0, inherited from MMDetection (see `LICENSE`). Upstream backbone
-projects carry their own licences — see `THIRD_PARTY.md`, and note in
-particular that **MambaVision is NVIDIA non-commercial**.
+Apache-2.0, inherited from MMDetection ([`LICENSE`](LICENSE)). Upstream
+backbones carry their own terms — note in particular that **MambaVision is
+NVIDIA non-commercial**.
