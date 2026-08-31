@@ -1,5 +1,8 @@
 # Date-palm instance segmentation across sensors and scales
 
+[![validate](https://github.com/brakuta/Datepalm-Instance-Segmentation/actions/workflows/validate.yml/badge.svg)](https://github.com/brakuta/Datepalm-Instance-Segmentation/actions/workflows/validate.yml)
+[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
+
 Mask R-CNN with eleven interchangeable backbones — CNN, transformer and
 state-space (Mamba-family) — trained and evaluated on date-palm crown
 delineation in imagery from **5 cm UAV down to 30 cm satellite**, and the
@@ -57,13 +60,16 @@ File contents are unchanged; only folder names differ, and cross-folder
 ### 1 — Single-sensor benchmark (UAV 5 cm)
 
 The controlled comparison: same data, same schedule, same detector, only
-the backbone changes. Both size variants of most families, so scale is a
-visible axis rather than a confound.
+the backbone changes. Both size variants of most families — 18 configs in
+all — so scale is a visible axis rather than a confound.
 
 ```
 maskrcnn_{r50,r101,swin_t,swin_s,convnext_t,pvtv2_b2}_uav5cm.py
-maskrcnn_{vmamba,spatialmamba,groupmamba,efficientvmamba,mambaout,mambavision}_{t,s}_uav5cm.py
+maskrcnn_{vmamba,spatialmamba,groupmamba,mambaout,mambavision}_{t,s}_uav5cm.py
+maskrcnn_efficientvmamba_{s,b}_uav5cm.py
 ```
+
+(EfficientVMamba's size variants are S and B; it has no T.)
 
 ### 2 — Pooled 15 cm (Google Earth + aerial)
 
@@ -144,7 +150,8 @@ configs/Custom/
 mmdet/models/backbones/       backbone wrappers (no architecture code)
 palm_inference/               tiled, resumable, georeferenced inference
 docker/                       Dockerfile.reconstructed -- the environment recipe
-tools/                        validate_repo.py -- consistency checks
+tools/                        train.py, test.py (vendored from MMDetection),
+                              install_backbones.py, validate_repo.py
 .github/workflows/            CI
 
 README.md          this page
@@ -168,12 +175,14 @@ finishes in seconds:
 python tools/validate_repo.py
 ```
 
-Four checks, each corresponding to a defect this repository actually had:
+Six checks, each corresponding to a defect this repository actually had:
 
 | check | the defect it prevents |
 |---|---|
 | config inheritance | two configs inherited a base file that was not published — unloadable, and nothing said so |
 | documentation links | the README named an installation verifier and a build recipe that were absent |
+| documentation paths | commands in READMEs, shell scripts and docstrings referenced experiment folders by pre-publication names — every copy-pasteable command failed |
+| custom imports resolve | configs declared `custom_imports` modules that no published file provided |
 | no private paths | a base config carried absolute paths from an unrelated project, and a username in a comment |
 | no data artefacts | checkpoints and imagery are easy to commit by accident |
 
@@ -189,6 +198,11 @@ Run it before opening a pull request.
 | Transformer | Swin-T/S, PVTv2-B2 |
 | State-space | VMamba, Spatial-Mamba, GroupMamba, EfficientVMamba, MambaVision |
 | SSM ablation | **MambaOut** — *removes* the SSM; a control, not a Mamba model |
+
+Eleven backbones by name; counting both size variants, the single-sensor
+benchmark (experiment 1) runs 18 configs, and the pooled and unified
+experiments (2 and 3) run the 10–11 that fit their budgets — each folder's
+README lists its own set.
 
 Wrappers live in `mmdet/models/backbones/` and **contain no architecture
 code**. They adapt upstream implementations expected at fixed paths —
@@ -241,7 +255,25 @@ the first GPU kernel launch.
 [`docker/Dockerfile.reconstructed`](docker/Dockerfile.reconstructed) is the
 recipe, pinned to the exact commits used. **Order matters**: torch is
 installed before mmcv, because mmcv compiles against whatever torch it
-finds.
+finds. The tail of the file gives the `docker run` command, including the
+mount points the dataset configs expect.
+
+**One step is easy to miss when installing by hand.** The configs import
+the backbone wrappers as `mmdet.models.backbones.*`, which means the
+wrapper files must live *inside* the installed mmdet package — a plain
+`pip install mmdet==3.3.0` knows nothing about them, and every
+Mamba-family config then fails at load time. After installing the
+environment, run:
+
+```bash
+python tools/install_backbones.py
+```
+
+It copies `mmdet/models/backbones/*.py` from this repository into the
+installed package (the Dockerfile does this for you). `tools/train.py`
+and `tools/test.py` are vendored unchanged from MMDetection 3.3.0, so the
+training commands in the per-experiment READMEs work from the repository
+root.
 
 | | |
 |---|---|
@@ -290,9 +322,11 @@ image count in the log.
 to the project. Every config needed to retrain is here.
 
 **No pretrained weights.** [`weights.yaml`](weights.yaml) records each by
-official source and **SHA256**, and separates *upstream* files from
-*derived* ones produced locally that exist nowhere online. Several were
-renamed during the work — **match by hash, not filename**.
+official source and — for the files central to the reported results — by
+**SHA256**, and separates *upstream* files from *derived* ones produced
+locally that exist nowhere online. Several were renamed during the work —
+**match by hash, not filename**. Entries whose hash was not captured
+before the machines were retired say `UNKNOWN` rather than guessing.
 
 **Not the Google Earth acquisition tooling.** Withheld; the imagery is
 subject to the provider's terms. Nothing in the modelling code depends on

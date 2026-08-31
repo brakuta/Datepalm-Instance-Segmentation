@@ -15,7 +15,8 @@ Every run writes its own metrics. Nothing below re-reads a spreadsheet.
 # per-experiment scores, read out of each run's own logs
 python configs/Custom/tools_staged/summarize_stage_d.py       # satellite transfer
 python configs/Custom/Evaluation/compile_results.py           # benchmark tables
-python configs/Custom/Evaluation/compile_cross_transfer.py    # cross-sensor transfer
+python configs/Custom/Evaluation/compile_cross_transfer.py \
+    --manifest <transfer_manifest.json>                       # cross-sensor transfer
 ```
 
 `configs/Custom/Evaluation/` holds the metrics engine, the manifest
