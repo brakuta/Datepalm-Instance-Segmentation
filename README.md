@@ -123,6 +123,36 @@ to blind to it on tiles with no ground truth.
 
 ---
 
+## Repository layout
+
+```
+configs/Custom/
+  1_single_sensor_uav_5cm/    UAV 5 cm backbone benchmark          + README
+  2_pooled_15cm_ge_aerial/    GE + aerial pooled at 15 cm          + README
+  3_unified_multisource/      all three sources, one model         + README
+  4_satellite_wv3_30cm/       WorldView-3 transfer + budget ladder  + README
+  5_deployment_finetune/      hard-negative adaptation, deployed    + README
+
+  _base_palm/                 datasets, schedules, hooks, samplers  + README
+                              -- inherited by everything above
+  tools_staged/               satellite-transfer tooling            + README
+  utils/                      dataset building, inference, checks   + README
+  Evaluation/                 metrics engine and result tables      + README
+  Feature_Analysis/           representation analysis               + README
+  Finetune_HN/                hard-negative mining and calibration  + README
+
+mmdet/models/backbones/       backbone wrappers (no architecture code)
+palm_inference/               tiled, resumable, georeferenced inference
+docker/                       the environment recipe
+
+README.md  RESULTS.md  THIRD_PARTY.md  WITHHELD.md  weights.yaml  LICENSE
+```
+
+**Every folder has a README.** If you are unsure what something is, open
+the README next to it rather than guessing from the filenames.
+
+---
+
 ## The backbones
 
 | family | models |
@@ -241,6 +271,15 @@ subject to the provider's terms. Nothing in the modelling code depends on
 how imagery was obtained.
 
 Full list and reasons: [`WITHHELD.md`](WITHHELD.md).
+
+---
+
+## Results
+
+See [`RESULTS.md`](RESULTS.md). The headline tables are in the manuscript;
+that page gives the scripts that regenerate them from each run's own logs,
+and the three things that make a cross-stage comparison misleading if you
+miss them.
 
 ---
 
