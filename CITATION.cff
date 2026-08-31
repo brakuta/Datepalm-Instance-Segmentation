@@ -1,8 +1,35 @@
 cff-version: 1.2.0
-message: "If you use this software, please cite it as below."
+message: >-
+  If you use this code, please cite the manuscript below. Please also cite
+  MMDetection and the upstream backbone projects listed in THIRD_PARTY.md --
+  this repository is a fork of MMDetection and the backbone architectures
+  are the work of their respective authors.
+title: >-
+  Date-palm instance segmentation across sensors and scales: CNN,
+  transformer and state-space backbones
 authors:
-  - name: "MMDetection Contributors"
-title: "OpenMMLab Detection Toolbox and Benchmark"
-date-released: 2018-08-22
-url: "https://github.com/open-mmlab/mmdetection"
+  - family-names: Gibril
+    given-names: Mohamed Barakat A.
+type: software
 license: Apache-2.0
+repository-code: "https://github.com/brakuta/Datepalm-Instance-Segmentation"
+abstract: >-
+  Mask R-CNN with eleven interchangeable backbones evaluated on date-palm
+  crown instance segmentation from 5 cm UAV to 30 cm satellite imagery,
+  with the hard-negative adaptation used for a country-scale inventory.
+keywords:
+  - instance segmentation
+  - remote sensing
+  - state space models
+  - date palm
+  - very high resolution imagery
+
+# TODO on publication: add the journal reference here so that citing the
+# software also points at the paper.
+# preferred-citation:
+#   type: article
+#   title: ...
+#   authors: ...
+#   journal: ...
+#   year: ...
+#   doi: ...

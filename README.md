@@ -143,13 +143,41 @@ configs/Custom/
 
 mmdet/models/backbones/       backbone wrappers (no architecture code)
 palm_inference/               tiled, resumable, georeferenced inference
-docker/                       the environment recipe
+docker/                       Dockerfile.reconstructed -- the environment recipe
+tools/                        validate_repo.py -- consistency checks
+.github/workflows/            CI
 
-README.md  RESULTS.md  THIRD_PARTY.md  WITHHELD.md  weights.yaml  LICENSE
+README.md          this page
+RESULTS.md         how to regenerate the tables
+THIRD_PARTY.md     upstream projects, commits and licences
+WITHHELD.md        what is deliberately absent, and why
+weights.yaml       every weight by source and SHA256
+requirements.txt   pinned versions -- READ THE ORDERING NOTE
+CITATION.cff  CONTRIBUTING.md  LICENSE
 ```
 
 **Every folder has a README.** If you are unsure what something is, open
 the README next to it rather than guessing from the filenames.
+
+### Repository health
+
+CI runs on every push. It needs no GPU, no torch and no network, and
+finishes in seconds:
+
+```bash
+python tools/validate_repo.py
+```
+
+Four checks, each corresponding to a defect this repository actually had:
+
+| check | the defect it prevents |
+|---|---|
+| config inheritance | two configs inherited a base file that was not published — unloadable, and nothing said so |
+| documentation links | the README named an installation verifier and a build recipe that were absent |
+| no private paths | a base config carried absolute paths from an unrelated project, and a username in a comment |
+| no data artefacts | checkpoints and imagery are easy to commit by accident |
+
+Run it before opening a pull request.
 
 ---
 

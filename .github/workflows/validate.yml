@@ -1,0 +1,44 @@
+name: validate
+
+# Runs on every push and pull request. Standard library only -- no torch,
+# no GPU, no network -- so it finishes in seconds on a free runner.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Repository consistency
+        run: python tools/validate_repo.py
+
+      - name: Configs are syntactically valid
+        run: |
+          python - <<'PY'
+          import ast, pathlib, sys
+          bad = []
+          for f in pathlib.Path('.').rglob('*.py'):
+              if '.git' in f.parts:
+                  continue
+              try:
+                  ast.parse(f.read_text(errors='replace'))
+              except SyntaxError as e:
+                  bad.append(f'{f}:{e.lineno}: {e.msg}')
+          print(f'parsed {len(list(pathlib.Path(".").rglob("*.py")))} file(s)')
+          for b in bad:
+              print(' ', b)
+          sys.exit(1 if bad else 0)
+          PY
+
+      - name: Metadata files parse
+        run: |
+          python -c "import yaml,sys; yaml.safe_load(open('weights.yaml')); print('weights.yaml OK')" || pip install pyyaml && python -c "import yaml; yaml.safe_load(open('weights.yaml')); yaml.safe_load(open('CITATION.cff')); print('weights.yaml + CITATION.cff OK')"

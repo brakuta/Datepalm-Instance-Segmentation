@@ -1,0 +1,15 @@
+# Normalise line endings. Without this, cloning on Windows rewrites every
+# file to CRLF and git reports the entire repository as modified -- which is
+# noise that hides real changes, and it is why a first commit from Windows
+# prints a warning for every file.
+* text=auto eol=lf
+
+# Shell scripts must stay LF or they will not run.
+*.sh text eol=lf
+
+# Binary
+*.png binary
+*.jpg binary
+*.pdf binary
+*.pth binary
+*.ckpt binary

@@ -1,0 +1,42 @@
+# Pinned to the versions this work actually ran on. See README, "Reproducing
+# the environment", and docker/Dockerfile.reconstructed for the full recipe.
+#
+# ORDER IS NOT OPTIONAL. Do not `pip install -r` this file top to bottom and
+# expect it to work:
+#
+#   1. torch FIRST, from the cu121 index:
+#        pip install torch==2.1.0 torchvision==0.16.0 \
+#            --index-url https://download.pytorch.org/whl/cu121
+#   2. then the mm* stack below -- mmcv 2.1.0 is source-only on PyPI and
+#      COMPILES against whatever torch it finds
+#   3. then causal-conv1d and mamba-ssm FROM GIT AT A TAG, with
+#      --no-build-isolation, so they build against the torch installed above
+#      rather than a fresh one pulled into an isolated build env
+#   4. then the SSM projects' own kernels (selective_scan, dwconv2d)
+#
+# Installing this file in one shot gets step 2 wrong and fails at import
+# with a missing-symbol error that says nothing about ordering.
+
+# --- step 2: the OpenMMLab stack ---
+mmengine==0.10.1
+mmcv==2.1.0
+mmdet==3.3.0
+mmpretrain==1.2.0
+mmsegmentation==1.0.0
+
+# --- pure-python dependencies ---
+numpy==1.26.4          # <2.0 deliberately: mmcv 2.1.0 predates NumPy 2
+timm==1.0.15
+einops==0.8.1
+packaging
+ptflops==0.7.5
+
+# --- geospatial ---
+rasterio==1.4.4
+geopandas==1.1.3
+shapely==2.1.2
+pyproj
+
+# --- step 3, NOT installable from here ---
+# causal-conv1d @ git+https://github.com/Dao-AILab/causal-conv1d.git@v1.4.0
+# mamba-ssm     @ git+https://github.com/state-spaces/mamba.git@v2.2.4

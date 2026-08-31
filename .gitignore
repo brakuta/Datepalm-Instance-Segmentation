@@ -1,0 +1,41 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.ipynb_checkpoints/
+
+# Environments
+.venv/
+venv/
+.env
+
+# Training and inference outputs -- never commit these
+work_dirs/
+checkpoints/
+datasets/
+data/
+results/
+*.pth
+*.ckpt
+*.pkl
+*.npy
+
+# Geospatial outputs
+*.tif
+*.tiff
+*.gpkg
+*.shp
+*.parquet
+_manifest.parquet
+
+# Editors and OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
