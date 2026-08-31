@@ -57,7 +57,7 @@ default_scope = 'mmdet'
 #                this condition, so it is demonstrably VRAM-feasible and is
 #                the recommended setting.
 #  'fp32'     : OptimWrapper (full FP32), batch_size=1, accumulate=4.
-#               Retains the SESSION_CONTEXT "FP32 throughout" decision.
+#               Retains the "FP32 throughout" decision (STAGE_C_REDESIGN.md).
 #               Per-GPU batch is dropped to 1 so the FP32 working set fits in
 #               24 GB; accumulate=4 keeps the effective batch at 4.
 #

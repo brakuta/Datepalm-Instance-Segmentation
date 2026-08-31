@@ -1,5 +1,5 @@
 # ==========================================================================
-# maskrcnn_palm_stagec/maskrcnn_pvtv2_b2_stagec.py   (v1)
+# 3_unified_multisource/maskrcnn_pvtv2_b2_stagec.py   (v1)
 # --------------------------------------------------------------------------
 # Mask R-CNN + PVT-v2-B2 on the unified Stage C corpus
 # (UAV 5 cm + GE 15 cm + Aerial 15 cm, proportional sampling).

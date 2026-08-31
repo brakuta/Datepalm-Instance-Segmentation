@@ -3,7 +3,7 @@
 # --------------------------------------------------------------------------
 # WorldView-3 30 cm single-source dataset. 3,636 train / 407 val / 413 test
 # tiles, 512x512, class DatePalm; 63,946 distinct reference crowns.
-# Rebuilt 4 Aug 2026 -- see configs/Custom/maskrcnn_palm_staged/STAGE_D_README.md
+# Rebuilt 4 Aug 2026 -- see configs/Custom/4_satellite_wv3_30cm/STAGE_D_README.md
 # section 5 for provenance and the per-split annotation counts.
 #
 # v2 (training-only changes; val/test pipelines unchanged so the

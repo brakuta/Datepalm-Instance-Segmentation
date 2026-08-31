@@ -41,6 +41,7 @@ quietly finds fewer palms.
 | `maskrcnn_spatialmamba_s_finetune_hn.py` | the hard-negative adaptation |
 | `maskrcnn_spatialmamba_s_finetune_fn.py` | the false-negative counterpart |
 | `maskrcnn_spatialmamba_s_deploy.py` | **the deployed configuration** |
+| `maskrcnn_spatialmamba_s_deploy_captest.py` | cap probe — `max_per_img` raised to 5000 to measure where the cap binds |
 
 The deploy config raises the per-image detection cap. Its header explains
 why: the cap binds only in dense plantations, validation tiles were never
@@ -64,3 +65,17 @@ not improved anything; it has moved the failure somewhere less visible.
 
 See the repository README, "Running the deployed model". Note that the
 inference CLI defaults are **not** the deployment settings.
+
+Four operational notes that cost time if you do not know them:
+
+- `--score-thr` is the **pipeline** threshold. The model always runs at
+  its own internal `score_thr` of 0.05; this value decides what reaches
+  the output.
+- `--overlap` must be at least the largest expected crown diameter in
+  pixels, or palms on tile boundaries are cut in half and counted twice.
+- `--batch-size 6` is sized for a 24 GB card at tile size 1024. Halve it
+  if you hit CUDA out-of-memory; it changes throughput, not results.
+- An interrupted run resumes from `_manifest.parquet` in the output root.
+  Delete the manifest (and the `_consolidated*.gpkg` next to it) **only**
+  if you intend to redo every image — leaving it in place is what makes
+  the run resumable.

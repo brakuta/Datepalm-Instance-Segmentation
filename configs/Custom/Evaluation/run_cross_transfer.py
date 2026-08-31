@@ -132,7 +132,7 @@ def write_example_manifest(path: str) -> None:
                 "label": "ResNet-50",
                 "family": "CNN",
                 "train_source": "UAV",
-                "config": "configs/Custom/maskrcnn_palm_uav/maskrcnn_r50_uav5cm.py",
+                "config": "configs/Custom/1_single_sensor_uav_5cm/maskrcnn_r50_uav5cm.py",
                 "checkpoint": "work_dirs/Stage_A/maskrcnn_r50_uav5cm/best_coco_segm_mAP_50_iter_*.pth",
                 "applied_score_thr": None
             },
@@ -140,7 +140,7 @@ def write_example_manifest(path: str) -> None:
                 "label": "Swin-S",
                 "family": "Transformer",
                 "train_source": "GE_Aerial",
-                "config": "configs/Custom/maskrcnn_palm_ms15/maskrcnn_swin_s_ms15.py",
+                "config": "configs/Custom/2_pooled_15cm_ge_aerial/maskrcnn_swin_s_ms15.py",
                 "checkpoint": "work_dirs/Stage_B/maskrcnn_swin_s_ms15/best_coco_segm_mAP_50_iter_*.pth",
                 "applied_score_thr": None
             }
@@ -327,8 +327,8 @@ def main() -> None:
         unknown = [s for s in sensors if s not in valid]
         if unknown:
             sys.exit(f'[ERROR] matrix["{src}"] references unregistered sensor(s) '
-                     f'{unknown}. Registered: {sorted(valid)}. Add them to '
-                     f'sensor_registry.py (see sensor_registry_crossres_additions.py).')
+                     f'{unknown}. Registered: {sorted(valid)}. Add the missing '
+                     f'entries to the SENSORS table in sensor_registry.py.')
 
     device = resolve_device(args.device)
 

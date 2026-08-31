@@ -1,5 +1,5 @@
 # ==========================================================================
-# maskrcnn_palm/maskrcnn_pvtv2_b2_uav5cm.py
+# 1_single_sensor_uav_5cm/maskrcnn_pvtv2_b2_uav5cm.py
 # --------------------------------------------------------------------------
 # Mask R-CNN + PVT-v2-B2 on UAV 5 cm.
 #

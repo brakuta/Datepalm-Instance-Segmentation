@@ -53,7 +53,7 @@
 #   python compile_results.py \
 #       --results-dir results/stage_b \
 #       --run-missing \
-#       --config-dir  configs/Custom/maskrcnn_palm_ms15 \
+#       --config-dir  configs/Custom/2_pooled_15cm_ge_aerial \
 #       --work-root   work_dirs \
 #       --eval-script evaluate_model.py \
 #       --backbones   maskrcnn_r50_ms15 maskrcnn_r101_ms15 \

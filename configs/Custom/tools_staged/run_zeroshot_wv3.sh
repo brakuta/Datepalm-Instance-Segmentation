@@ -10,7 +10,7 @@
 #
 # Input: a manifest file with one "config<TAB-or-space>checkpoint" pair per
 # line (use select_stagec_checkpoint.py output to fill the checkpoints):
-#   configs/Custom/maskrcnn_palm_stagec/maskrcnn_r50_stagec.py /workspace/mmdetection/work_dirs/Stage_C/maskrcnn_r50_stagec/best_....pth
+#   configs/Custom/3_unified_multisource/maskrcnn_r50_stagec.py /workspace/mmdetection/work_dirs/Stage_C/maskrcnn_r50_stagec/best_....pth
 #
 # Usage:
 #   bash tools_staged/run_zeroshot_wv3.sh zeroshot_pairs.txt

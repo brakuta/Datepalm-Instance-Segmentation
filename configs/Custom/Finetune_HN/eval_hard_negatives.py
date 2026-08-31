@@ -48,7 +48,7 @@
 #
 # USAGE
 #   python configs/Custom/Finetune_HN/eval_hard_negatives.py \
-#       --config configs/Custom/maskrcnn_palm_finetune_hn/maskrcnn_spatialmamba_s_finetune_hn.py \
+#       --config configs/Custom/5_deployment_finetune/maskrcnn_spatialmamba_s_finetune_hn.py \
 #       --checkpoint base=work_dirs/Stage_C/maskrcnn_spatialmamba_s_stagec/best_GE_segm_mAP_50_iter_75001.pth \
 #       --checkpoint hn4000=work_dirs/Finetune_HN/maskrcnn_spatialmamba_s_finetune_hn/best_coco_segm_mAP_50_iter_4000.pth \
 #       --checkpoint hn13000=work_dirs/Finetune_HN/maskrcnn_spatialmamba_s_finetune_hn/iter_13000.pth \

@@ -1,5 +1,5 @@
 # ==========================================================================
-# maskrcnn_palm_ms15/maskrcnn_mambavision_s_ms15.py
+# 2_pooled_15cm_ge_aerial/maskrcnn_mambavision_s_ms15.py
 # --------------------------------------------------------------------------
 # Mask R-CNN + MambaVision-S on the pooled MS-15 cm corpus
 # (GE 15 cm + Aerial 15 cm training, GE-only validation;
@@ -54,7 +54,7 @@
 # Launch:
 #   PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True \
 #   python tools/train.py \
-#       configs/Custom/maskrcnn_palm_ms15/maskrcnn_mambavision_s_ms15.py
+#       configs/Custom/2_pooled_15cm_ge_aerial/maskrcnn_mambavision_s_ms15.py
 #
 # All three RPN-side reductions, the cudnn_benchmark override, and the
 # allocator configuration must be applied together. These collectively

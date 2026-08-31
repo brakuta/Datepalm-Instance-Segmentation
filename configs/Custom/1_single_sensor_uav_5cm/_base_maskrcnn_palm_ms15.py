@@ -1,5 +1,5 @@
 # ==========================================================================
-# maskrcnn_palm/_base_maskrcnn_palm_ms15.py
+# 1_single_sensor_uav_5cm/_base_maskrcnn_palm_ms15.py
 # --------------------------------------------------------------------------
 # Mask R-CNN architecture base for the Stage B (MS-15 cm) date palm
 # benchmark.

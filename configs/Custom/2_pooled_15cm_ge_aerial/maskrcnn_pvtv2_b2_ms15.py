@@ -1,5 +1,5 @@
 # ==========================================================================
-# maskrcnn_palm_ms15/maskrcnn_pvtv2_b2_ms15.py
+# 2_pooled_15cm_ge_aerial/maskrcnn_pvtv2_b2_ms15.py
 # --------------------------------------------------------------------------
 # Mask R-CNN + PVT-v2-B2 on the pooled MS-15 cm corpus
 # (GE 15 cm + Aerial 15 cm, sensor-balanced sampling at alpha=0.3).

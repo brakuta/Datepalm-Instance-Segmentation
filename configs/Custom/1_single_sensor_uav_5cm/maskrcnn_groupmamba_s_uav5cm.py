@@ -1,5 +1,5 @@
 # ==========================================================================
-# maskrcnn_palm/optional/maskrcnn_groupmamba_s_uav5cm.py
+# 1_single_sensor_uav_5cm/optional/maskrcnn_groupmamba_s_uav5cm.py
 # --------------------------------------------------------------------------
 # Mask R-CNN + GroupMamba-Small on UAV 5 cm.
 #

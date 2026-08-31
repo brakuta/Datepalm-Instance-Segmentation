@@ -12,20 +12,21 @@ Example: scan two input trees (one with mosaics, one with per-tile folders),
 write outputs to a single tree, then merge+dedup at the end.
 
     python -m palm_inference.run_inference \\
-        --input-root /data/uae/mosaics \\
-        --input-root /data/uae/per_tile_folders \\
-        --output-root /data/uae/palm_output \\
-        --config-file configs/Custom/maskrcnn_palm_finetune_hn/maskrcnn_spatialmamba_s_deploy.py \\
-        --checkpoint <see docs/handover/FACTS.yml for the deployed checkpoint> \\
+        --input-root /path/to/mosaics \\
+        --input-root /path/to/per_tile_folders \\
+        --output-root /path/to/palm_output \\
+        --config-file configs/Custom/5_deployment_finetune/maskrcnn_spatialmamba_s_deploy.py \\
+        --checkpoint /path/to/deployed_checkpoint.pth \\
         --tile-size 1024 --overlap 256 \\
         --batch-size 6 --score-thr 0.30 \\
         --postprocess --density
 
-The config path above is the DEPLOYMENT config and it exists. Two earlier
-examples in this file and in readme.txt named
-`configs/Custom/MambaVision/...` and `configs/Custom/VMamba/...`; neither
-directory has ever existed in this tree, so both failed immediately with a
-file-not-found that reads like a broken install rather than a stale docstring.
+The config path above is the DEPLOYMENT config and it exists in this tree.
+Earlier examples in this file named config directories (`MambaVision/`,
+`VMamba/`) that have never existed here, so both failed immediately with a
+file-not-found that reads like a broken install rather than a stale
+docstring. The trained checkpoint is not distributed with this repository
+(see WITHHELD.md).
 
 --score-thr is the PIPELINE threshold, not the model's. The model runs at an
 internal score_thr of 0.05 regardless; this value filters what reaches the

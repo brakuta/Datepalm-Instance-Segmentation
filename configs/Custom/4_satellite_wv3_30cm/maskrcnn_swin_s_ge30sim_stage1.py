@@ -1,5 +1,5 @@
 # ==========================================================================
-# maskrcnn_palm_staged/maskrcnn_swin_s_ge30sim_stage1.py   (Stage D, A1)
+# 4_satellite_wv3_30cm/maskrcnn_swin_s_ge30sim_stage1.py   (Stage D, A1)
 # --------------------------------------------------------------------------
 # A1 (Stage 1 of the 30 cm curriculum): train Swin-S on the simulated-30 cm
 # Google Earth corpus (GE-30sim, 19,472 tiles), INITIALISED AT LAUNCH from the
@@ -8,7 +8,7 @@
 #
 # LAUNCH (WS2 / A5000):
 #   python tools/train.py \
-#     configs/Custom/maskrcnn_palm_staged/maskrcnn_swin_s_ge30sim_stage1.py \
+#     configs/Custom/4_satellite_wv3_30cm/maskrcnn_swin_s_ge30sim_stage1.py \
 #     --work-dir /workspace/mmdetection/work_dirs/Stage_D/swin_s_ge30sim_stage1 \
 #     --cfg-options \
 #       load_from=work_dirs/Stage_B/maskrcnn_swin_s_ms15/best_coco_segm_mAP_50_iter_50000.pth \

@@ -14,8 +14,8 @@
 # committing GPU hours.
 #
 # Usage:
-#   python tools/bench_dataloader_stagec.py \
-#       --config configs/Custom/maskrcnn_palm_stagec/maskrcnn_r50_stagec.py \
+#   python configs/Custom/Evaluation/bench_dataloader_stagec.py \
+#       --config configs/Custom/3_unified_multisource/maskrcnn_r50_stagec.py \
 #       --iters 200 \
 #       [--warmup 10]
 

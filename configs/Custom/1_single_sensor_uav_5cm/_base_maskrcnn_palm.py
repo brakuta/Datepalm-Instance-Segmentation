@@ -1,5 +1,5 @@
 # ==========================================================================
-# maskrcnn_palm/_base_maskrcnn_palm.py
+# 1_single_sensor_uav_5cm/_base_maskrcnn_palm.py
 # --------------------------------------------------------------------------
 # Mask R-CNN architecture base for the date palm benchmark.
 # This file defines the detector ONLY. Dataset, schedule, and runtime are

@@ -28,7 +28,8 @@ maskrcnn_{vmamba_s,spatialmamba_s,groupmamba_s,
           efficientvmamba_b,mambavision_s,mambaout_s}_stagec.py
 ```
 
-`STAGE_C_REDESIGN.md` in this folder documents a real failure and its fix:
+[`../_base_palm/STAGE_C_REDESIGN.md`](../_base_palm/STAGE_C_REDESIGN.md)
+documents a real failure and its fix:
 an earlier version trained in FP32 while claiming comparability with
 Stage B, which had trained in mixed precision. Backbones were being
 compared under different conditions inside the same matrix. **Read it

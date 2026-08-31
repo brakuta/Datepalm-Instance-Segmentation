@@ -60,7 +60,7 @@
 # Usage
 # -----
 #   python metrics_engine.py \
-#       --config     configs/Custom/maskrcnn_palm/maskrcnn_r50_uav5cm.py \
+#       --config     configs/Custom/1_single_sensor_uav_5cm/maskrcnn_r50_uav5cm.py \
 #       --checkpoint work_dirs/maskrcnn_r50_uav5cm/best_coco_segm_mAP_50_iter_*.pth
 #       --batch-size 8     --num-workers 8
 #   Output

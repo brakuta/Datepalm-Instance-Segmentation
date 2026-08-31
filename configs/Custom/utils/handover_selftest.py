@@ -94,8 +94,9 @@ def check_in_container():
                'container.\nThe project is only supported inside the '
                'container: the host is\nmissing the compiled parts and the '
                'exact library versions.',
-               'Start the container first, using the docker run command in\n'
-               'the documentation, then run this test again from inside it.')
+               'Start the container first -- the docker run command is at the\n'
+               'end of docker/Dockerfile.reconstructed -- then run this\n'
+               'test again from inside it.')
 
 
 def check_torch():
@@ -104,8 +105,8 @@ def check_torch():
     except ImportError:
         report(FAIL, 'PyTorch is not installed',
                'Nothing can run without it.',
-               'You are outside the container, or the image did not load\n'
-               'correctly. Re-check the "docker load" step.')
+               'You are outside the container, or the environment was not\n'
+               'built correctly. Rebuild from docker/Dockerfile.reconstructed.')
         return None
     report(PASS, f'PyTorch {torch.__version__}',
            f'built against CUDA {torch.version.cuda}')
@@ -212,10 +213,9 @@ def check_extensions():
              else missing_optional).append(mod)
             if need == 'required':
                 report(FAIL, f'{mod} is MISSING', f'{what}\n{exc}',
-                       'The container image is incomplete. Re-check the\n'
-                       '"docker load" step, and confirm the file downloaded\n'
-                       'completely (compare its size against the '
-                       'documentation).')
+                       'The environment is incomplete. Rebuild it from\n'
+                       'docker/Dockerfile.reconstructed -- the missing piece is\n'
+                       'one of the compiled kernels it builds.')
     if missing_optional:
         report(WARN, f'{len(missing_optional)} optional fast kernel(s) missing',
                ', '.join(missing_optional) + '\n'
@@ -348,8 +348,8 @@ def check_mmdet():
             report(PASS, f'{mod} {getattr(m, "__version__", "?")}')
         except Exception as exc:                              # noqa: BLE001
             report(FAIL, f'{mod} is not installed', str(exc),
-                   'The container image is incomplete or you are not inside\n'
-                   'it. Re-check the "docker load" and "docker run" steps.')
+                   'The environment is incomplete or you are not inside the\n'
+                   'container. Rebuild from docker/Dockerfile.reconstructed.')
             return False
     return True
 
@@ -421,8 +421,8 @@ def check_data(path):
         report(FAIL, 'The imagery library (rasterio) is not installed',
                'Your images cannot be checked, and the pipeline cannot run.',
                'This is a software problem, NOT a problem with your images.\n'
-               'You are outside the container, or the image did not load\n'
-               'correctly. Re-check the "docker load" and "docker run" steps.')
+               'You are outside the container, or the environment was not\n'
+               'built correctly. Rebuild from docker/Dockerfile.reconstructed.')
         return
     unreadable = []
     for p in imgs[:5]:

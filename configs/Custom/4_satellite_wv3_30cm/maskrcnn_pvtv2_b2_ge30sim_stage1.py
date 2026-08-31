@@ -1,5 +1,5 @@
 # ==========================================================================
-# maskrcnn_palm_staged/maskrcnn_pvtv2_b2_ge30sim_stage1.py   (Stage D, arm P1)
+# 4_satellite_wv3_30cm/maskrcnn_pvtv2_b2_ge30sim_stage1.py   (Stage D, arm P1)
 # --------------------------------------------------------------------------
 # P1 (Stage 1 of the 30 cm curriculum): train PVT-v2-B2 on the simulated-
 # 30 cm Google Earth corpus (GE-30sim, 19,472 tiles). This is the single
@@ -18,7 +18,7 @@
 #
 # LAUNCH (WS1 / A5000; ~1 day, early stop):
 #   python tools/train.py \
-#     configs/Custom/maskrcnn_palm_staged/maskrcnn_pvtv2_b2_ge30sim_stage1.py \
+#     configs/Custom/4_satellite_wv3_30cm/maskrcnn_pvtv2_b2_ge30sim_stage1.py \
 #     --work-dir /workspace/mmdetection/work_dirs/Stage_D/pvtv2_b2_ge30sim_stage1 \
 #     --cfg-options \
 #       train_dataloader.num_workers=2 train_dataloader.prefetch_factor=2

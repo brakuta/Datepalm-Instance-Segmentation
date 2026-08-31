@@ -18,7 +18,7 @@ Median-density selection is a deterministic, defensible criterion; the ranked
 listing permits manual substitution where visual inspection suggests a better
 exemplar (e.g. to avoid shadowed or cloud-affected scenes).
 
-Usage (from the mmdetection root):
+Usage (from the repository root):
     # list the 5 median-density candidates per tile set
     python configs/Custom/Feature_Analysis/pick_showcase_tiles.py \
         --config configs/Custom/Feature_Analysis/config_feature_analysis.json

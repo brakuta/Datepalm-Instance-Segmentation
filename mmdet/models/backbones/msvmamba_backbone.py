@@ -3,6 +3,11 @@
 #
 # MMDetection wrapper for MSVMamba (Shi et al., NeurIPS 2024).
 #
+# NOT USED by any published config or reported result -- kept because the
+# environment carries the /opt/msvmamba clone (see THIRD_PARTY.md) and the
+# wrapper documents how it would be registered without colliding with
+# VMamba. Safe to ignore.
+#
 # IMPORTANT: MSVMamba's source reuses the filename `vmamba.py` and the class
 # names `VSSM` / `Backbone_VSSM` from the original VMamba repo, but the
 # IMPLEMENTATIONS ARE DIFFERENT — MSVMamba invokes multi-scale scan blocks

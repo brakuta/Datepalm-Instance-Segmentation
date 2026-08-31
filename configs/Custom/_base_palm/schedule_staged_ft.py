@@ -1,8 +1,11 @@
 # ==========================================================================
 # _base_palm/schedule_staged_ft.py   (Stage D, v3)
 # --------------------------------------------------------------------------
-# v3: rescaled for the enlarged WV-3 set (2,413 train tiles, ~1,207 iter/epoch
-# at batch 2). max_iters 8000 -> 40000 (~33 epochs); EarlyStoppingHook decides
+# v3: rescaled for the enlarged WV-3 set (2,413 train tiles at the time,
+# ~1,207 iter/epoch at batch 2; the 4 Aug 2026 ground-truth regeneration
+# brought the set to 3,636 train tiles -- see dataset_sat_30cm_staged.py --
+# without this schedule being re-derived).
+# max_iters 8000 -> 40000 (~33 epochs); EarlyStoppingHook decides
 # the real cutoff. val_interval 1000 -> 1200 (~1 val/epoch). Warmup 250 -> 1000.
 # Cosine T_max tracks max_iters. fp16 AmpOptimWrapper -> fp32 OptimWrapper to
 # remove the NaN-overflow risk (matches the ge30sim_stage1 fix); rely on

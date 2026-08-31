@@ -1,5 +1,5 @@
 # ==========================================================================
-# maskrcnn_palm_stagec/maskrcnn_mambavision_s_stagec.py   (v1)
+# 3_unified_multisource/maskrcnn_mambavision_s_stagec.py   (v1)
 # --------------------------------------------------------------------------
 # Mask R-CNN + MambaVision-S on the unified Stage C corpus
 # (UAV 5 cm + GE 15 cm + Aerial 15 cm, proportional sampling). TITAN RTX only.

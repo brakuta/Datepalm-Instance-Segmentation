@@ -1,5 +1,5 @@
 # ==========================================================================
-# maskrcnn_palm_staged/maskrcnn_pvtv2_b2_staged_ft.py   (Stage D, v1)
+# 4_satellite_wv3_30cm/maskrcnn_pvtv2_b2_staged_ft.py   (Stage D, v1)
 # --------------------------------------------------------------------------
 # WV-3 30 cm fine-tuning config. Backbone/neck VERBATIM from the Stage C
 # counterpart (architecture untouched). Initialisation and annotation budget

@@ -70,7 +70,7 @@
 #
 # ARM bu IS STILL CUT
 #   The budget curve is an annotation-cost study in its own right and belongs
-#   to the companion paper -- see maskrcnn_palm_staged/STAGE_D_README.md
+#   to the companion paper -- see 4_satellite_wv3_30cm/STAGE_D_README.md
 #   section 4. This script refuses it rather than letting a cut arm run out
 #   of habit. Arm s still owes the paper a Methods paragraph describing how
 #   GE-30sim was produced and why it is a fair proxy; without that paragraph
@@ -92,7 +92,7 @@ cd "${MMDET_ROOT}"
 
 export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 
-CFG_DIR="configs/Custom/maskrcnn_palm_staged"
+CFG_DIR="configs/Custom/4_satellite_wv3_30cm"
 STAGE_C_ROOT="/workspace/mmdetection/work_dirs/Stage_C"
 SIM_ROOT="/workspace/mmdetection/work_dirs/Stage_D/Simulated"
 WORK_ROOT="/workspace/mmdetection/work_dirs/Stage_D"

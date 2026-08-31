@@ -17,7 +17,8 @@ maskrcnn_{r50,r101}_uav5cm.py                    CNN baselines
 maskrcnn_{convnext_t}_uav5cm.py                  modern CNN
 maskrcnn_{swin_t,swin_s,pvtv2_b2}_uav5cm.py      transformers
 maskrcnn_{vmamba,spatialmamba,groupmamba,
-          efficientvmamba,mambavision}_{t,s}_uav5cm.py   state-space
+          mambavision}_{t,s}_uav5cm.py                   state-space
+maskrcnn_efficientvmamba_{s,b}_uav5cm.py         state-space (sizes S and B; no T)
 maskrcnn_mambaout_{t,s}_uav5cm.py                SSM ABLATION -- see below
 ```
 

@@ -1,5 +1,5 @@
 # ==========================================================================
-# maskrcnn_palm/maskrcnn_mambavision_t_uav5cm.py
+# 1_single_sensor_uav_5cm/maskrcnn_mambavision_t_uav5cm.py
 # --------------------------------------------------------------------------
 # Mask R-CNN + MambaVision-Tiny on UAV 5 cm.
 #

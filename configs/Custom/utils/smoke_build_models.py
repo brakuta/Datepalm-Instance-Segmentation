@@ -70,8 +70,8 @@ def build_and_run(cfg_path, size, device):
         msg = f'{type(exc).__name__}: {exc}'
         if 'no kernel image' in str(exc):
             msg += ('\n           -> the kernel was compiled for a different '
-                    'GPU architecture.\n              Rebuild it: see '
-                    'FACTS.yml gpu_compatibility.rebuild_command')
+                    'GPU architecture.\n              Rebuild the kernels with a wider '
+                    'TORCH_CUDA_ARCH_LIST\n              (see docker/Dockerfile.reconstructed)')
         return FAIL, f'forward failed: {msg}', time.time() - t0
     finally:
         del model
@@ -85,7 +85,7 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument('--config', action='append', default=[],
                     help='a specific config; repeatable. Default: the Stage C set')
-    ap.add_argument('--glob', default='configs/Custom/maskrcnn_palm_stagec/maskrcnn_*.py',
+    ap.add_argument('--glob', default='configs/Custom/3_unified_multisource/maskrcnn_*.py',
                     help='which configs to try when --config is not given')
     ap.add_argument('--size', type=int, default=1024,
                     help='dummy image side in pixels (default 1024, the '
@@ -141,8 +141,8 @@ def main():
         print('\n This is not necessarily a broken delivery. The CNN and')
         print(' transformer backbones do not use the SSM kernels, so if')
         print(' those passed, this machine can still train and run them.')
-        print(' Check FACTS.yml -> gpu_compatibility before concluding')
-        print(' anything about the hardware.')
+        print(' See the GPU-architecture note in the README ("Reproducing')
+        print(' the environment") before concluding anything about the hardware.')
     else:
         print('\n Every model built and executed a forward pass. The compiled')
         print(' kernels work on this GPU -- which importing them does not')

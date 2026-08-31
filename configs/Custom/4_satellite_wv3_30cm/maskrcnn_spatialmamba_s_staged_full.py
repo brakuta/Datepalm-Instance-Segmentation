@@ -1,5 +1,5 @@
 # ==========================================================================
-# maskrcnn_palm_staged/maskrcnn_spatialmamba_s_staged_full.py   (Stage D, v4)
+# 4_satellite_wv3_30cm/maskrcnn_spatialmamba_s_staged_full.py   (Stage D, v4)
 # --------------------------------------------------------------------------
 # ARM B0 -- full training on real WV-3 30 cm from ImageNet weights.
 # Architecture byte-identical to maskrcnn_spatialmamba_s_staged_ft.py --

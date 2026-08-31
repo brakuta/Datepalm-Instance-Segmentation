@@ -26,18 +26,18 @@ Rendering improvements over the composite phase: bilinear upsampling of
 small feature grids (no blocky nearest-neighbour artefacts on 30 cm tiles),
 2-98 percentile contrast normalisation per panel, and an input reference row.
 
-Usage (from the mmdetection root; one GPU model resident at a time):
+Usage (from the repository root; one GPU model resident at a time):
 
   # A. previous-paper-style mosaic, best model, your chosen tile
   python configs/Custom/Feature_Analysis/make_qualitative_figures.py channels \\
-      --config configs/Custom/Feature_Analysis/config_run03.json \\
+      --config configs/Custom/Feature_Analysis/config_feature_analysis.json \\
       --model SpatialMamba-S --source neck --topk 8 \\
       --tile /workspace/datasets/COCO/UAV_5cm/test_UAV/JPEGImages/000000000003.jpg \\
       --out  /root/work_dirs/feature_analysis/manuscript_figs
 
   # B. multiscale x GSD ladder, your chosen same-scene tiles + a WV-3 tile
   python configs/Custom/Feature_Analysis/make_qualitative_figures.py ladder \\
-      --config configs/Custom/Feature_Analysis/config_run03.json \\
+      --config configs/Custom/Feature_Analysis/config_feature_analysis.json \\
       --model SpatialMamba-S \\
       --tiles UAV5=/.../test_UAV/JPEGImages/000000000003.jpg \\
               UAV15=/.../test_UAV_15cm/JPEGImages/000000000003.jpg \\

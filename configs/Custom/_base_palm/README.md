@@ -16,6 +16,23 @@ Each header states the corpus, tile counts and provenance. **Read the
 header before changing a path** — several document why a setting is what
 it is.
 
+### Paths you must edit
+
+The dataset files ship with the original container's absolute paths, and
+an outside reader has none of that layout. Before training, point these at
+your own data (built per `configs/Custom/utils/TILING_README.md`):
+
+- **`data_root`** (and the per-source roots in
+  `dataset_UAV_GE_Aerial_pooled_C.py`) — where the COCO trees live. Keep
+  them consistent with `configs/Custom/Evaluation/sensor_registry.py`, or
+  training and evaluation will silently read different data.
+- **`pretrained=` / `init_cfg` checkpoint paths** in the per-experiment
+  configs — where the ImageNet weights sit (`weights.yaml` identifies each
+  file; some configs use relative `checkpoints/...`, others the original
+  absolute paths).
+- **`work_dir`** in the Stage 3/4 configs — where runs write; folders 1–2
+  use relative `./work_dirs/`.
+
 ## Schedules
 
 `schedule_*.py` — iteration budget, optimiser, precision, LR schedule.
