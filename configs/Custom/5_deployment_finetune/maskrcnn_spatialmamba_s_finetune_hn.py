@@ -93,7 +93,7 @@
 #     KeyError: Duplicate key is not allowed among bases. Duplicate keys: {'model'}
 # Inheriting the Stage C config alone brings the detector, the Spatial-Mamba-S
 # backbone and the FPN, which is everything this adaptation needs.
-_base_ = ['../maskrcnn_palm_stagec/maskrcnn_spatialmamba_s_stagec.py']
+_base_ = ['../3_unified_multisource/maskrcnn_spatialmamba_s_stagec.py']
 
 # --------------------------------------------------------------------------
 # OPTIONAL surgical mode (uncomment to freeze the backbone entirely). Hard-

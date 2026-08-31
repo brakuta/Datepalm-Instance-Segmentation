@@ -66,7 +66,7 @@
 # _base_maskrcnn_palm_stagec.py, so naming the detector base here as well made
 # two sibling bases define `model` and MMEngine refused the config:
 #     KeyError: Duplicate key is not allowed among bases. Duplicate keys: {'model'}
-_base_ = ['../maskrcnn_palm_stagec/maskrcnn_spatialmamba_s_stagec.py']
+_base_ = ['../3_unified_multisource/maskrcnn_spatialmamba_s_stagec.py']
 
 # --------------------------------------------------------------------------
 # EDIT THESE

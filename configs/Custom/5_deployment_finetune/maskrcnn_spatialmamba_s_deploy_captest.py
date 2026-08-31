@@ -27,7 +27,7 @@
 #   of raising it is zero everywhere the validation could see.
 # ==========================================================================
 
-_base_ = ['../maskrcnn_palm_stagec/maskrcnn_spatialmamba_s_stagec.py']
+_base_ = ['../3_unified_multisource/maskrcnn_spatialmamba_s_stagec.py']
 
 model = dict(
     test_cfg=dict(

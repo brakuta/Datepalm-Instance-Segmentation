@@ -56,7 +56,7 @@
 # ==========================================================================
 
 _base_ = [
-    '../maskrcnn_palm/_base_maskrcnn_palm_ms15.py',
+    '../1_single_sensor_uav_5cm/_base_maskrcnn_palm_ms15.py',
     '../_base_palm/dataset_MS15_pooled.py',
     '../_base_palm/schedule_unified_MS_80k.py',
     '../_base_palm/runtime_palm_ms15.py',

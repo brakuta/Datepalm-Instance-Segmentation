@@ -15,22 +15,46 @@ with project configs, backbone wrappers and tooling added.
 The work is five experiments, each answering a different question. **Pick
 the row you care about** — you do not need the others.
 
-| | question | imagery | configs |
+| | question | imagery | folder |
 |---|---|---|---|
-| **A. Single-sensor** | Which backbone is best when the sensor is fixed? | UAV 5 cm | [`maskrcnn_palm/`](configs/Custom/maskrcnn_palm) |
-| **B. Two-source pooled** | Does pooling two 15 cm sources help? | GE 15 cm + aerial 15 cm | [`maskrcnn_palm_ms15/`](configs/Custom/maskrcnn_palm_ms15) |
-| **C. Three-source unified** | One model for all sensors, or one per sensor? | UAV 5 cm + GE 15 cm + aerial 15 cm | [`maskrcnn_palm_stagec/`](configs/Custom/maskrcnn_palm_stagec) |
-| **D. Satellite transfer** | How far does it carry to 30 cm, and how much labelling does that take? | WorldView-3 30 cm | [`maskrcnn_palm_staged/`](configs/Custom/maskrcnn_palm_staged) |
-| **E. Deployment** | Making it survive contact with a whole country | GE 15 cm, national | [`maskrcnn_palm_finetune_hn/`](configs/Custom/maskrcnn_palm_finetune_hn) |
+| **1** | Which backbone is best when the sensor is fixed? | UAV 5 cm | [`1_single_sensor_uav_5cm/`](configs/Custom/1_single_sensor_uav_5cm) |
+| **2** | Does pooling two 15 cm sources help? | GE + aerial, 15 cm | [`2_pooled_15cm_ge_aerial/`](configs/Custom/2_pooled_15cm_ge_aerial) |
+| **3** | One model for all sensors, or one per sensor? | UAV 5 cm + GE + aerial | [`3_unified_multisource/`](configs/Custom/3_unified_multisource) |
+| **4** | How far does it carry to 30 cm, and at what labelling cost? | WorldView-3 30 cm | [`4_satellite_wv3_30cm/`](configs/Custom/4_satellite_wv3_30cm) |
+| **5** | Surviving contact with a whole country | GE 15 cm, national | [`5_deployment_finetune/`](configs/Custom/5_deployment_finetune) |
 
-Each has a dataset definition in
-[`configs/Custom/_base_palm/`](configs/Custom/_base_palm) — `dataset_uav_5cm`,
+**Every folder has its own README** giving the configs, which to run
+first, and the design decisions that are easy to get wrong. Start there,
+not here.
+
+Dataset definitions live in
+[`configs/Custom/_base_palm/`](configs/Custom/_base_palm): `dataset_uav_5cm`,
 `dataset_MS15_pooled`, `dataset_UAV_GE_Aerial_pooled_C`,
 `dataset_sat_30cm_staged`, `dataset_ge30sim`.
 
+<details>
+<summary>Mapping to the internal stage names</summary>
+
+The manuscript and the authors' notes use stage letters. The folders were
+renamed here because `stagec` and `staged` differ by one letter and mean
+unrelated things, and `ms15` means nothing to a reader.
+
+| public folder | internal |
+|---|---|
+| `1_single_sensor_uav_5cm` | `maskrcnn_palm` — Stage A |
+| `2_pooled_15cm_ge_aerial` | `maskrcnn_palm_ms15` — Stage B |
+| `3_unified_multisource` | `maskrcnn_palm_stagec` — Stage C |
+| `4_satellite_wv3_30cm` | `maskrcnn_palm_staged` — Stage D |
+| `5_deployment_finetune` | `maskrcnn_palm_finetune_hn` |
+
+File contents are unchanged; only folder names differ, and cross-folder
+`_base_` references were rewritten to match.
+
+</details>
+
 ---
 
-### A — Single-sensor benchmark (UAV 5 cm)
+### 1 — Single-sensor benchmark (UAV 5 cm)
 
 The controlled comparison: same data, same schedule, same detector, only
 the backbone changes. Both size variants of most families, so scale is a
@@ -41,21 +65,21 @@ maskrcnn_{r50,r101,swin_t,swin_s,convnext_t,pvtv2_b2}_uav5cm.py
 maskrcnn_{vmamba,spatialmamba,groupmamba,efficientvmamba,mambaout,mambavision}_{t,s}_uav5cm.py
 ```
 
-### B — Two-source pooled (15 cm)
+### 2 — Pooled 15 cm (Google Earth + aerial)
 
 Trains on Google Earth 15 cm and aerial 15 cm together, validating on GE
 only. Aerial is held out and scored afterwards through a separate
 eval-only config — so "does pooling help?" is answered without the
 validation set choosing the answer.
 
-### C — Three-source unified model
+### 3 — Unified multi-source model
 
 UAV 5 cm, GE 15 cm and aerial 15 cm pooled, with **source-local batch
 construction**: batches are drawn from one source at a time, for page-cache
 locality across three mounts. Eleven backbones. This is the comparison the
 deployed model came from.
 
-### D — Satellite transfer (WorldView-3 30 cm)
+### 4 — Satellite transfer (WorldView-3, 30 cm)
 
 The hardest question here, and the one with the most machinery. Four
 config families:
@@ -74,10 +98,10 @@ is a measurement rather than an artefact of which tiles were drawn.
 Multispectral runs widen a 3-channel ImageNet stem to 8 channels
 (`tools_staged/inflate_stem_to_nband.py`) so they still start pretrained.
 
-Read [`maskrcnn_palm_staged/STAGE_D_README.md`](configs/Custom/maskrcnn_palm_staged/STAGE_D_README.md)
+Read [`STAGE_D_README.md`](configs/Custom/4_satellite_wv3_30cm/STAGE_D_README.md)
 before running any of these.
 
-### E — Deployment and hard-negative adaptation
+### 5 — Deployment and hard-negative adaptation
 
 A benchmark model applied to a whole country meets terrain the training
 set never contained: palm-like shrubs, ghaf, acacia. `_finetune_hn`
@@ -123,7 +147,7 @@ repository and the exact commit used.
 python -m palm_inference.run_inference \
   --input-root /path/to/geotiffs \
   --output-root /path/to/output \
-  --config-file configs/Custom/maskrcnn_palm_finetune_hn/maskrcnn_spatialmamba_s_deploy.py \
+  --config-file configs/Custom/5_deployment_finetune/maskrcnn_spatialmamba_s_deploy.py \
   --checkpoint /path/to/checkpoint.pth \
   --tile-size 1024 --overlap 256 \
   --score-thr 0.30 --postprocess

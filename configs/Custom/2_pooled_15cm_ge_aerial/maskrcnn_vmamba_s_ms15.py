@@ -1,73 +1,69 @@
 # ==========================================================================
-# maskrcnn_palm_ms15/maskrcnn_efficientvmamba_b_ms15.py
+# maskrcnn_palm_ms15/maskrcnn_vmamba_s_ms15.py
 # --------------------------------------------------------------------------
-# Mask R-CNN + EfficientVMamba-Base on the pooled MS-15 cm corpus
+# Mask R-CNN + VMamba-Small on the pooled MS-15 cm corpus
 # (GE 15 cm + Aerial 15 cm, sensor-balanced sampling at alpha=0.3).
 #
-# Stage B counterpart of maskrcnn_efficientvmamba_b_uav5cm.py. The backbone
-# and neck blocks are inherited verbatim from Stage A to preserve
-# cross-stage architectural comparability.
+# Stage B counterpart of maskrcnn_vmamba_s_uav5cm.py. The backbone and
+# neck blocks are inherited verbatim from Stage A to preserve cross-stage
+# architectural comparability.
 #
-# IMPORTANT — checkpoint path:
-#   EfficientVMamba checkpoints are stored at a different path from all
-#   other backbones in this benchmark:
-#     /workspace/mmdetection/checkpoints/efficientvmamba/
-#   (other backbones use /workspace/mmdetection/checkpoints/)
-#   Verify this path is accessible inside the container before launching.
+# Role within Stage B:
+#   - Scaling check for VMamba within the Mamba cohort.
+#   - Comparison targets:
+#       - maskrcnn_vmamba_t_ms15.py (same family, smaller capacity)
+#       - maskrcnn_mambavision_s_ms15.py (parameter-matched Mamba
+#         reference with hybrid SSM+attention stages)
 #
-# EfficientVMamba-B architecture (MM_EFFVSSM backbone):
-#   dims                : 96
-#   depths              : (2, 2, 9, 2)
-#   ssm_d_state         : 16
-#   ssm_ratio           : 2.0
-#   mlp_ratio           : 0.0              (no MLP after SSM)
-#   downsample_version  : 'v1'
-#   patchembed_version  : 'v1'
-#   window_size         : 2                (atrous skip-sampling)
-#   drop_path_rate      : 0.2
-# Stage output channels : [96, 192, 384, 768]
-#
-# Note: Unlike EfficientVMamba-S, the Base variant uses dims=96 and
-# [96, 192, 384, 768] FPN in_channels. This matches the upstream
-# checkpoint and does not require the dims correction applied to Small.
+# VMamba-S architecture:
+#   dims       : 96
+#   depths     : (2, 2, 15, 2)   (deeper stage 3 vs Tiny's 8 blocks)
+#   ssm_ratio  : 2.0             (higher than Tiny's 1.0)
+#   ssm_d_state: 1
+#   drop_path  : 0.3             (higher than Tiny's 0.2)
+# Stage output channels: [96, 192, 384, 768]
 #
 # Mamba-specific design decisions (inherited verbatim from Stage A):
 #   - frozen_stages=0 (full fine-tuning). Benchmark invariant across
 #     all Mamba backbones in both Stage A and Stage B.
+#   - VMamba-S stage-3 has 15 blocks vs Tiny's 8, approximately doubling
+#     stage-3 activation memory. If OOM occurs, the first remediation
+#     is reducing accumulative_counts from 2 to 1 in
+#     schedule_unified_MS_80k.py (or a per-config override).
+#     Tile size 1024x1024 is a benchmark invariant and must not be
+#     changed.
+#   - Pretrained checkpoint path is the same container-local path used
+#     in Stage A.
 #
 # -----------------------------------------------------------------------
 # CRITICAL — custom_imports overrides runtime imports entirely:
 #   MMEngine replaces (does not merge) the top-level custom_imports key
 #   when set in a child config. The full import list from
 #   runtime_palm_ms15.py must therefore be reproduced here, with the
-#   addition of 'mmdet.models.backbones.efficientvmamba_backbone'.
+#   addition of 'mmdet.models.backbones.vmamba_backbone'.
 #
 # CRITICAL — custom_hooks overrides runtime hooks entirely:
 #   Same replacement behaviour. The full hook stack from
 #   runtime_palm_ms15.py must be reproduced here.
-#   compute_flops=True: torch.jit.trace succeeds on EfficientVMamba's
-#   pure-SSM forward graph.
-#
-# Reference upstream config:
-#   /opt/efficientvmamba/detection/configs/efficient/
-#       mask_rcnn_vssm_fpn_coco_efficient_2292_96.py
+#   compute_flops=True: torch.jit.trace succeeds on VMamba's pure-SSM
+#   forward graph (no hybrid attention stages).
 # ==========================================================================
 
 _base_ = [
-    '../maskrcnn_palm/_base_maskrcnn_palm_ms15.py',
+    '../1_single_sensor_uav_5cm/_base_maskrcnn_palm_ms15.py',
     '../_base_palm/dataset_MS15_pooled.py',
     '../_base_palm/schedule_unified_MS_80k.py',
     '../_base_palm/runtime_palm_ms15.py',
 ]
 
 # --- Custom imports -------------------------------------------------------
-# Reproduces runtime_palm_ms15.py imports plus the EfficientVMamba backbone.
+# Reproduces runtime_palm_ms15.py imports plus the VMamba backbone.
 # MMEngine replaces custom_imports entirely when set in a child config.
 custom_imports = dict(
     imports=[
         'configs.Custom._base_palm.benchmark_logging_hook',
         'configs.Custom._base_palm.sensor_balanced_sampler',
-        'mmdet.models.backbones.efficientvmamba_backbone',
+        'mmdet.models.backbones.vmamba_backbone',
     ],
     allow_failed_imports=False,
 )
@@ -91,23 +87,26 @@ custom_hooks = [
     ),
 ]
 
-# --- Backbone + neck override (verbatim from Stage A EfficientVMamba-B) ---
+# --- Backbone + neck override (verbatim from Stage A VMamba-S) ------------
 model = dict(
     backbone=dict(
         _delete_=True,
-        type='MM_EFFVSSM',
+        type='MM_VSSM',
         out_indices=(0, 1, 2, 3),
-        pretrained='/workspace/mmdetection/checkpoints/efficientvmamba/efficient_vmamba_base.ckpt',
-        depths=(2, 2, 9, 2),
+        pretrained='/workspace/mmdetection/checkpoints/vmamba/vmamba_small_imagenet1k.pth',
         dims=96,
-        ssm_d_state=16,
+        depths=(2, 2, 15, 2),
+        ssm_d_state=1,
         ssm_dt_rank='auto',
         ssm_ratio=2.0,
-        mlp_ratio=0.0,
-        downsample_version='v1',
-        patchembed_version='v1',
-        window_size=2,
-        drop_path_rate=0.2,
+        ssm_conv=3,
+        ssm_conv_bias=False,
+        forward_type='v05_noz',
+        mlp_ratio=4.0,
+        downsample_version='v3',
+        patchembed_version='v2',
+        drop_path_rate=0.3,
+        norm_layer='ln2d',
         frozen_stages=0,
     ),
     neck=dict(
@@ -121,4 +120,4 @@ model = dict(
     ),
 )
 
-work_dir = './work_dirs/maskrcnn_efficientvmamba_b_ms15'
+work_dir = './work_dirs/maskrcnn_vmamba_s_ms15'

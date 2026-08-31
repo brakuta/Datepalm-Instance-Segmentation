@@ -42,7 +42,7 @@
 #   ownership, the shape gate and polygon NMS all still apply downstream.
 # ==========================================================================
 
-_base_ = ['../maskrcnn_palm_stagec/maskrcnn_spatialmamba_s_stagec.py']
+_base_ = ['../3_unified_multisource/maskrcnn_spatialmamba_s_stagec.py']
 
 model = dict(
     test_cfg=dict(

@@ -1,68 +1,73 @@
 # ==========================================================================
-# maskrcnn_palm_ms15/maskrcnn_spatialmamba_s_ms15.py
+# maskrcnn_palm_ms15/maskrcnn_efficientvmamba_b_ms15.py
 # --------------------------------------------------------------------------
-# Mask R-CNN + Spatial-Mamba-Small on the pooled MS-15 cm corpus
+# Mask R-CNN + EfficientVMamba-Base on the pooled MS-15 cm corpus
 # (GE 15 cm + Aerial 15 cm, sensor-balanced sampling at alpha=0.3).
 #
-# Stage B counterpart of maskrcnn_spatialmamba_s_uav5cm.py. The backbone
+# Stage B counterpart of maskrcnn_efficientvmamba_b_uav5cm.py. The backbone
 # and neck blocks are inherited verbatim from Stage A to preserve
 # cross-stage architectural comparability.
 #
-# Spatial-Mamba-S architecture:
-#   dims       : 64               (SAME as Tiny — Spatial-Mamba convention)
-#   depths     : (2, 4, 21, 5)    (deeper stage 3 and 4 vs Tiny)
-#   d_state    : 1
-#   drop_path  : 0.3
-#   norm_layer : 'ln'
-# Stage output channels: [64, 128, 256, 512]  (SAME as Tiny — dims=64)
+# IMPORTANT — checkpoint path:
+#   EfficientVMamba checkpoints are stored at a different path from all
+#   other backbones in this benchmark:
+#     /workspace/mmdetection/checkpoints/efficientvmamba/
+#   (other backbones use /workspace/mmdetection/checkpoints/)
+#   Verify this path is accessible inside the container before launching.
 #
-# Key architectural note: unlike VMamba and MambaVision, Spatial-Mamba-S
-# does NOT widen channels relative to Tiny. Capacity scaling is achieved
-# purely through stage-3 depth (21 blocks vs 8) and stage-4 depth
-# (5 blocks vs 4). FPN in_channels therefore matches Tiny exactly.
-# This is not a config error — it is by architectural design.
+# EfficientVMamba-B architecture (MM_EFFVSSM backbone):
+#   dims                : 96
+#   depths              : (2, 2, 9, 2)
+#   ssm_d_state         : 16
+#   ssm_ratio           : 2.0
+#   mlp_ratio           : 0.0              (no MLP after SSM)
+#   downsample_version  : 'v1'
+#   patchembed_version  : 'v1'
+#   window_size         : 2                (atrous skip-sampling)
+#   drop_path_rate      : 0.2
+# Stage output channels : [96, 192, 384, 768]
 #
-# Practical implication: OOM risk on Small is higher than Tiny despite
-# identical channel widths, because stage-3 activation memory scales
-# with depth (21 vs 8 blocks). If OOM occurs, reduce
-# accumulative_counts from 2 to 1 via a per-config optim_wrapper
-# override. Tile size 1024x1024 is a benchmark invariant.
+# Note: Unlike EfficientVMamba-S, the Base variant uses dims=96 and
+# [96, 192, 384, 768] FPN in_channels. This matches the upstream
+# checkpoint and does not require the dims correction applied to Small.
 #
 # Mamba-specific design decisions (inherited verbatim from Stage A):
 #   - frozen_stages=0 (full fine-tuning). Benchmark invariant across
 #     all Mamba backbones in both Stage A and Stage B.
-#   - Pretrained checkpoint path is the same container-local path used
-#     in Stage A (offline container, no network access).
 #
 # -----------------------------------------------------------------------
 # CRITICAL — custom_imports overrides runtime imports entirely:
 #   MMEngine replaces (does not merge) the top-level custom_imports key
 #   when set in a child config. The full import list from
 #   runtime_palm_ms15.py must therefore be reproduced here, with the
-#   addition of 'mmdet.models.backbones.spatialmamba_backbone'.
+#   addition of 'mmdet.models.backbones.efficientvmamba_backbone'.
 #
 # CRITICAL — custom_hooks overrides runtime hooks entirely:
 #   Same replacement behaviour. The full hook stack from
 #   runtime_palm_ms15.py must be reproduced here.
-#   compute_flops=True: torch.jit.trace succeeds on Spatial-Mamba's
+#   compute_flops=True: torch.jit.trace succeeds on EfficientVMamba's
 #   pure-SSM forward graph.
+#
+# Reference upstream config:
+#   /opt/efficientvmamba/detection/configs/efficient/
+#       mask_rcnn_vssm_fpn_coco_efficient_2292_96.py
 # ==========================================================================
 
 _base_ = [
-    '../maskrcnn_palm/_base_maskrcnn_palm_ms15.py',
+    '../1_single_sensor_uav_5cm/_base_maskrcnn_palm_ms15.py',
     '../_base_palm/dataset_MS15_pooled.py',
     '../_base_palm/schedule_unified_MS_80k.py',
     '../_base_palm/runtime_palm_ms15.py',
 ]
 
 # --- Custom imports -------------------------------------------------------
-# Reproduces runtime_palm_ms15.py imports plus the SpatialMamba backbone.
+# Reproduces runtime_palm_ms15.py imports plus the EfficientVMamba backbone.
 # MMEngine replaces custom_imports entirely when set in a child config.
 custom_imports = dict(
     imports=[
         'configs.Custom._base_palm.benchmark_logging_hook',
         'configs.Custom._base_palm.sensor_balanced_sampler',
-        'mmdet.models.backbones.spatialmamba_backbone',
+        'mmdet.models.backbones.efficientvmamba_backbone',
     ],
     allow_failed_imports=False,
 )
@@ -86,25 +91,29 @@ custom_hooks = [
     ),
 ]
 
-# --- Backbone + neck override (verbatim from Stage A SpatialMamba-S) ------
+# --- Backbone + neck override (verbatim from Stage A EfficientVMamba-B) ---
 model = dict(
     backbone=dict(
         _delete_=True,
-        type='MM_SpatialMamba',
+        type='MM_EFFVSSM',
         out_indices=(0, 1, 2, 3),
-        pretrained='/workspace/mmdetection/checkpoints/spatialmamba/spatialmamba_small_in1k.pth',
-        dims=64,
-        depths=(2, 4, 21, 5),
-        d_state=1,
-        drop_path_rate=0.3,
-        mlp_ratio=4.0,
-        norm_layer='ln',
+        pretrained='/workspace/mmdetection/checkpoints/efficientvmamba/efficient_vmamba_base.ckpt',
+        depths=(2, 2, 9, 2),
+        dims=96,
+        ssm_d_state=16,
+        ssm_dt_rank='auto',
+        ssm_ratio=2.0,
+        mlp_ratio=0.0,
+        downsample_version='v1',
+        patchembed_version='v1',
+        window_size=2,
+        drop_path_rate=0.2,
         frozen_stages=0,
     ),
     neck=dict(
         _delete_=True,
         type='FPN',
-        in_channels=[64, 128, 256, 512],   # same as Tiny -- not a config error
+        in_channels=[96, 192, 384, 768],
         out_channels=256,
         num_outs=5,
         add_extra_convs='on_output',
@@ -112,4 +121,4 @@ model = dict(
     ),
 )
 
-work_dir = './work_dirs/maskrcnn_spatialmamba_s_ms15'
+work_dir = './work_dirs/maskrcnn_efficientvmamba_b_ms15'
