@@ -1,0 +1,171 @@
+# =============================================================================
+# THE REAL BUILD RECIPE for this project's environment.
+# =============================================================================
+# Reconstructed 2026-08-31 from `docker history --no-trunc` of the image the
+# working container actually ran on (sha256:66e686816190, tagged
+# mamba-mmdet:as-run-2026-08-31). NOT written from memory.
+#
+# READ THIS BEFORE YOU TRUST IT
+#   The original image was NOT built from a Dockerfile end to end. Its top two
+#   layers are `/bin/bash` -- meaning `docker commit` of a container somebody
+#   worked in by hand. Everything below the marker "MANUAL WORK" is therefore
+#   RECONSTRUCTED from evidence (the /opt clones' own git remotes and commits),
+#   not copied from a build script that ever existed.
+#
+#   Concretely: the original Dockerfile clones only vim, spatial_mamba and
+#   vssd. The wrappers in mmdet/models/backbones/ hard-code /opt/vmamba,
+#   /opt/groupmamba and /opt/efficientvmamba and insert them into sys.path
+#   themselves. Those four trees were added by hand afterwards. An image built
+#   from the original Dockerfile alone LOOKS correct and cannot instantiate
+#   VMamba, GroupMamba or EfficientVMamba.
+#
+#   This file adds them back, pinned to the commits measured on the machine.
+#
+# THIS IS THE SECOND-BEST ARTEFACT
+#   The exported image (mamba_slim.tar, 17.6 GB) is the first-best: it needs
+#   no build and cannot drift. Use this file when that image will not load --
+#   a new CPU architecture, a Docker version that rejects the format, or a
+#   need to change a version. Expect to debug it; a two-hour build has many
+#   ways to fail, and the pinned dependencies below may be withdrawn upstream.
+#
+#   BUILD:  docker build -f Dockerfile.reconstructed -t mamba-mmdet:rebuilt .
+#           (expect 1-2 hours; the kernel builds dominate)
+#   VERIFY: python configs/Custom/utils/handover_selftest.py   # 0 failure(s)
+# =============================================================================
+
+# Measured from the layer history: CUDA 12.1.0, cuDNN 8.9.0.131, Ubuntu 22.04,
+# and the -devel variant (it carries cuda-cudart-dev, nsight-compute, nvprof).
+FROM nvidia/cuda:12.1.0-cudnn8-devel-ubuntu22.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV CUDA_HOME=/usr/local/cuda
+
+RUN apt-get update && apt-get install -y \
+        git wget curl vim nano ninja-build \
+        build-essential python3 python3-pip python3-dev \
+        libglib2.0-0 libsm6 libxext6 libxrender-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN ln -s /usr/bin/python3 /usr/bin/python
+RUN python3 -m pip install --upgrade pip setuptools wheel
+
+# Order matters. torch first: mmcv 2.1.0 is sdist-only on PyPI and COMPILES
+# against whatever torch and CUDA are present. Installing them together, or
+# mmcv first, produces a build against the wrong ABI that fails at import
+# with a message about a missing symbol rather than a wrong order.
+RUN pip install torch==2.1.0 torchvision==0.16.0 \
+        --index-url https://download.pytorch.org/whl/cu121
+
+RUN pip install \
+        mmengine==0.10.1 \
+        mmcv==2.1.0 \
+        mmdet==3.3.0 \
+        mmsegmentation==1.0.0 \
+        mmpretrain==1.2.0
+
+RUN pip install packaging
+
+# From git at a tag, NOT from PyPI -- both compile CUDA extensions, and
+# --no-build-isolation is required so they build against the torch installed
+# above rather than a fresh one pulled into an isolated build env.
+RUN git clone https://github.com/Dao-AILab/causal-conv1d.git /tmp/causal-conv1d \
+    && cd /tmp/causal-conv1d && git checkout v1.4.0 \
+    && pip install --no-cache-dir --no-build-isolation . \
+    && rm -rf /tmp/causal-conv1d
+
+RUN git clone https://github.com/state-spaces/mamba.git /tmp/mamba \
+    && cd /tmp/mamba && git checkout v2.2.4 \
+    && pip install --no-cache-dir --no-build-isolation . \
+    && rm -rf /tmp/mamba
+
+RUN pip install mambavision
+
+# ---- trees the original Dockerfile cloned, now pinned -----------------------
+# The original used a bare `git clone`, which takes whatever HEAD is on the
+# day. Pinned here to the commits measured in the running container, because
+# an unpinned clone is a build that quietly stops reproducing itself.
+RUN git clone https://github.com/hustvl/Vim.git /opt/vim \
+    && git -C /opt/vim checkout dd0358ad1e42701f22afbefa0717cc8825cf9f45
+
+RUN git clone https://github.com/EdwardChasel/Spatial-Mamba.git /opt/spatial_mamba \
+    && git -C /opt/spatial_mamba checkout f72ed9b2486a5931190912dcfa8b964033c80e8c \
+    && if [ -f /opt/spatial_mamba/requirements.txt ]; then \
+           pip install -r /opt/spatial_mamba/requirements.txt; fi
+
+RUN git clone https://github.com/YuHengsss/VSSD.git /opt/vssd \
+    && git -C /opt/vssd checkout c10de2f8b717a04459b09cbd651de2e768f302c8 \
+    && if [ -f /opt/vssd/requirements.txt ]; then \
+           pip install -r /opt/vssd/requirements.txt; fi
+
+# =============================================================================
+# MANUAL WORK -- reconstructed, not from any build script
+# =============================================================================
+# These trees are absent from the original Dockerfile and were added by hand.
+# The backbone wrappers hard-code these exact paths, so the DIRECTORY NAMES
+# are load-bearing: /opt/vmamba, /opt/groupmamba, /opt/efficientvmamba.
+RUN git clone https://github.com/MzeroMiko/VMamba.git /opt/vmamba \
+    && git -C /opt/vmamba checkout 2ed52ead062a51a64521ed3871d52914bf532876
+
+RUN git clone https://github.com/Amshaker/GroupMamba.git /opt/groupmamba \
+    && git -C /opt/groupmamba checkout c1800ed262e995de3c645348e7e0202e8385f334
+
+RUN git clone https://github.com/TerryPei/EfficientVMamba.git /opt/efficientvmamba \
+    && git -C /opt/efficientvmamba checkout 0bc5ee288b402d648641f5494b73e9d152e0c62b
+
+RUN git clone https://github.com/YuHengsss/MSVMamba.git /opt/msvmamba \
+    && git -C /opt/msvmamba checkout c39401918e94f11eb29e4932b901b3fd139f1377
+
+# ---- COMPILED KERNELS -------------------------------------------------------
+# The working environment imports selective_scan_cuda, selective_scan_cuda_core,
+# selective_scan_cuda_oflex, selective_scan_cuda_ndstate and dwconv2d. Nothing
+# above builds them; they were compiled by hand after the image was built.
+#
+# The setup.py locations are MEASURED on the machine (2026-08-31):
+#     /opt/vmamba/kernels/selective_scan/setup.py
+#     /opt/spatial_mamba/kernels/selective_scan/setup.py
+#     /opt/spatial_mamba/kernels/dwconv2d/setup.py
+#     /opt/groupmamba/kernels/selective_scan/setup.py
+#     /opt/msvmamba/kernels/selective_scan/setup.py
+# (/opt/vmamba/analyze/convnexts4nd/extensions/kernels is unrelated -- an
+#  analysis extra, not loaded by any backbone here.)
+#
+# The INVOCATION below is each repository's documented form. It was not
+# captured from the original session, so treat it as unverified until the
+# self-test passes. That is the acceptance test, not the build succeeding:
+# a build for the wrong architecture succeeds and then fails at run time as
+# "no kernel image is available for execution on the device".
+#
+# TORCH_CUDA_ARCH_LIST is set WIDER than the original. The shipped dwconv2d
+# carries sm_75 alone, which is exactly why the image fails on anything newer
+# than a TITAN RTX. Building it once for several generations removes that
+# problem permanently, and costs only build time.
+ENV TORCH_CUDA_ARCH_LIST="7.5;8.0;8.6;8.9;9.0+PTX"
+
+RUN cd /opt/vmamba/kernels/selective_scan \
+    && pip install --no-build-isolation .
+
+RUN cd /opt/spatial_mamba/kernels/selective_scan \
+    && pip install --no-build-isolation . \
+    && cd /opt/spatial_mamba/kernels/dwconv2d \
+    && pip install --no-build-isolation .
+
+# groupmamba and msvmamba ship their own selective_scan. Whether the project
+# needs them separately, or whether the vmamba build satisfies the imports,
+# was not established -- build them if the self-test reports a missing
+# extension, and not otherwise.
+# RUN cd /opt/groupmamba/kernels/selective_scan && pip install --no-build-isolation .
+# RUN cd /opt/msvmamba/kernels/selective_scan  && pip install --no-build-isolation .
+
+# One package was pip-installed into the running container after the image was
+# built, found by `docker diff`. It is the only genuine drift in six days.
+RUN pip install ptflops==0.7.5
+
+# PYTHONPATH carries only three of the seven trees. That is correct and not an
+# oversight: the wrappers for vmamba, groupmamba and efficientvmamba insert
+# their own paths at import time. Do not "fix" it by adding them -- vmamba and
+# groupmamba both ship a module named csms6s.py, and putting both on
+# PYTHONPATH makes which one wins depend on import order.
+ENV PYTHONPATH=/opt/vim:/opt/spatial_mamba:/opt/vssd:
+
+WORKDIR /workspace
+CMD ["/bin/bash"]
