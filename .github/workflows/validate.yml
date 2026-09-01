@@ -4,7 +4,6 @@ name: validate
 # no GPU, no network -- so it finishes in seconds on a free runner.
 on:
   push:
-    branches: [main]
   pull_request:
   workflow_dispatch:
 

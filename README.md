@@ -108,7 +108,7 @@ Reference documents at the root:
 
 | file | contents |
 |---|---|
-| [`weights.yaml`](weights.yaml) | every model weight by source and SHA256 |
+| [`weights.yaml`](weights.yaml) | every model weight by official source, with SHA256 where captured |
 | [`THIRD_PARTY.md`](THIRD_PARTY.md) | upstream projects, pinned commits and licences |
 | [`WITHHELD.md`](WITHHELD.md) | files deliberately not published, and why |
 | [`requirements.txt`](requirements.txt) | pinned versions; read the ordering note inside |
