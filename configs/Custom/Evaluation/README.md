@@ -1,8 +1,8 @@
-# Evaluation — Date Palm Detection Benchmark
+# Evaluation
 
 A source-agnostic test-set evaluation pipeline. The same scripts
-evaluate any trained Mask R-CNN model on any test source — UAV, Google
-Earth, Aerial, or WorldView-3 satellite — and report mAP and F-score
+evaluate any trained Mask R-CNN model on any test source (UAV, Google
+Earth, Aerial, or WorldView-3 satellite) and report mAP and F-score
 for both the bounding-box and instance-segmentation tracks, plus a
 computational-efficiency profile per model.
 
@@ -12,7 +12,7 @@ Folder location: `configs/Custom/Evaluation/`
 > on trained checkpoints and prepared COCO-format test sets, neither of
 > which is distributed with this repository (see `WITHHELD.md` and
 > `weights.yaml` at the repository root). Dataset paths default to
-> `/workspace/datasets/COCO/...` in `sensor_registry.py` — edit the
+> `/workspace/datasets/COCO/...` in `sensor_registry.py`; edit the
 > `_COCO_ROOT` constant there to point at your own data. A few
 > workflow scripts (`make_stagec_manifest.py`, `splice_uav8.py`,
 > `verify_pkl_metrics.py`) additionally carry `/workspace/mmdetection/...`
@@ -38,7 +38,7 @@ python configs/Custom/Evaluation/compile_results.py \
 ```
 
 The compiler can also drive the runner for backbones whose CSVs are
-missing, so a whole stage is one resumable command:
+missing, so a whole experiment is one resumable command:
 
 ```bash
 python configs/Custom/Evaluation/compile_results.py \
@@ -78,35 +78,35 @@ secondary compilers, and checks that supported specific experiments.
 
 ### Supporting modules (imported by the others; not run in normal use)
 
-- **`sensor_registry.py`** — central registry of every test set and its
-  paths. The single source of truth for dataset locations; the only
+- `sensor_registry.py`: central registry of every test set and its
+  paths. The single source of truth for dataset locations, and the only
   file to edit when a path changes or a source is added.
-- **`metrics_engine.py`** — the metric engine. Defines
+- `metrics_engine.py`: the metric engine. Defines
   `PalmBenchmarkMetric`, `patch_config`, and the CSV writer shared by
   every evaluator, so all numbers in the paper come from one metric
   implementation. It also has its own CLI (`--config`, `--checkpoint`,
   `--ann-file`, `--img-prefix`) for a raw single evaluation outside the
   registry, but the runner below is the normal route.
-- **`efficiency.py`** — the efficiency profiler (params, FLOPs,
+- `efficiency.py`: the efficiency profiler (params, FLOPs,
   latency, FPS, peak VRAM) under a fixed single-image fp32 regime.
   Called by `evaluate_model.py`; documents why FLOPs are flagged as an
   undercount for the Mamba backbones.
 
 ### Main entry points
 
-- **`evaluate_model.py`** — per-model runner. Evaluates one model on
-  one or more sensors (`--sensors`, keys from the registry), writes one
-  accuracy CSV per sensor plus one efficiency CSV per model.
-  `--sensor-checkpoints SENSOR=PATH ...` expresses the Stage 3
+- `evaluate_model.py`: per-model runner. Evaluates one model on
+  one or more sensors (`--sensors`, keys from the registry), and writes
+  one accuracy CSV per sensor plus one efficiency CSV per model.
+  `--sensor-checkpoints SENSOR=PATH ...` expresses the experiment 3
   (unified multi-source) diagonal protocol, where UAV-derived sensors
   take the `best_UAV_*` checkpoint and GE-derived sensors `best_GE_*`.
-- **`compile_results.py`** — cross-backbone compiler. Ingests the
+- `compile_results.py`: cross-backbone compiler. Ingests the
   per-sensor CSVs, transposes each into one wide row per backbone, and
   writes per-sensor tables, a combined table, and an XLSX workbook to
   `<results-dir>/compiled/`. With `--run-missing` it first invokes
   `evaluate_model.py` for any backbone lacking CSVs, locating each
   checkpoint under `--work-root` (see section 7).
-- **`run_cross_transfer.py`** — zero-shot transfer driver. Evaluates
+- `run_cross_transfer.py`: zero-shot transfer driver. Evaluates
   each single-source model across its row of the transfer matrix, as
   declared in a manifest JSON (`--manifest`;
   `--write-example-manifest PATH` emits a template). Reuses the metric
@@ -114,7 +114,7 @@ secondary compilers, and checks that supported specific experiments.
   pipeline for the resampled sensors (see the registry), so transfer
   and in-domain numbers are produced by identical code. Resumable:
   cells whose CSV exists are skipped unless `--overwrite` is passed.
-- **`compile_cross_transfer.py`** — analyser for the transfer
+- `compile_cross_transfer.py`: analyser for the transfer
   experiment. Reads the per-cell CSVs named by the manifest
   (`--manifest`, optionally `--results-dir`, `--no-figures`) and writes
   the models-by-sensors matrices, per-model transfer gaps with the
@@ -126,39 +126,40 @@ The transfer experiment is defined by a manifest JSON rather than
 hardcoded lists, so adding or removing a model is a manifest edit, not
 a code change. These scripts write or amend manifests:
 
-- **`build_manifest.py`** — auto-generates the full manifest by
-  scanning the Stage 1 (UAV) and Stage 2 (pooled 15 cm) work_dirs,
-  resolving each run's best checkpoint and dumped config, and inferring
-  the backbone label and family from the run-dir name. Unresolvable
-  runs are written as `UNRESOLVED__...` placeholders and listed, so
-  nothing is silently dropped.
-- **`make_stagec_manifest.py`** — adds the Stage 3 (unified
+- `build_manifest.py`: auto-generates the full manifest by
+  scanning the experiment 1 (UAV) and experiment 2 (pooled 15 cm)
+  work_dirs, resolving each run's best checkpoint and dumped config,
+  and inferring the backbone label and family from the run-dir name.
+  Unresolvable runs are written as `UNRESOLVED__...` placeholders and
+  listed, so a missing run is visible in the manifest rather than
+  absent from it.
+- `make_stagec_manifest.py`: adds the experiment 3 (unified
   multi-source) model under the diagonal checkpoint protocol, expressed
   as two manifest rows per backbone (`Stage_C_U` with `best_UAV_*`,
   `Stage_C_G` with `best_GE_*`).
-- **`make_ge30sim_manifest.py`** — derives a `GE_30sim`-only manifest
+- `make_ge30sim_manifest.py`: derives a `GE_30sim`-only manifest
   from the full one, so the one missing matrix column can be evaluated
   without touching the existing cells or fighting relative-path resume
   state.
-- **`add_ge30sim.py`** — one-shot, idempotent patch that added the
+- `add_ge30sim.py`: one-shot, idempotent patch that added the
   `GE_30sim` sensor to `sensor_registry.py` and to the manifest matrix.
   Kept as a record of how that entry entered the registry; the shipped
   registry already contains it.
-- **`splice_uav8.py`** — one-shot repair that restored eight UAV-trained
+- `splice_uav8.py`: one-shot repair that restored eight UAV-trained
   backbones which had been dropped from the manifest, reconstructing
   their entries from the on-disk work_dir layout. Kept for provenance.
 
-### Validation and Stage 4 compilers
+### Validation and experiment 4 compilers
 
-- **`evaluate_validation.py`** — evaluates trained Stage 1/2/3
+- `evaluate_validation.py`: evaluates trained experiment 1/2/3
   checkpoints on their *validation* splits under the same metric and
   protocol as the test evaluation, because model selection happened on
   validation and reviewers ask for that number. Takes
   `--stage A=work_dirs/Stage_A B=work_dirs/Stage_B C=work_dirs/Stage_C`
   and is resumable.
-- **`compile_validation.py`** — assembles the validation CSVs into a
-  summary CSV, per-stage wide tables, and LaTeX tables.
-- **`compile_stage_d.py`** — Stage 4 (satellite) compiler. Exists
+- `compile_validation.py`: assembles the validation CSVs into a
+  summary CSV, per-experiment wide tables, and LaTeX tables.
+- `compile_stage_d.py`: experiment 4 (satellite) compiler. Exists
   because the b0 and cf arms share one config file, so
   `compile_results.py` would collapse them into one row; this compiler
   keys the arm on the results subdirectory
@@ -166,19 +167,19 @@ a code change. These scripts write or amend manifests:
 
 ### Checks and audits
 
-- **`audit_predictions.py`** — ground-truth audit visualiser. Runs a
+- `audit_predictions.py`: ground-truth audit visualiser. Runs a
   detector over an annotated set and renders TP (green) / FP (red) /
   FN (blue) polygon outlines per image, plus a per-image
   `audit_counts.csv` sorted by FP count, so suspected annotation gaps
   and genuine false alarms can be judged by eye.
-- **`verify_pkl_metrics.py`** — recomputes mAP directly from saved
+- `verify_pkl_metrics.py`: recomputes mAP directly from saved
   prediction PKLs (`tools/test.py --out` output) and diffs the result
   against the compiled matrix. A PKL written from the wrong checkpoint
   or split reproduces the wrong mAP here and is caught.
-- **`bench_dataloader_stagec.py`** — pre-launch sanity check for the
-  Stage 3 training dataloader: iterates it without a model forward and
-  reports data_time, per-source quota adherence, batch homogeneity, and
-  worker memory growth, so a slow or misconfigured loader is found
+- `bench_dataloader_stagec.py`: pre-launch sanity check for the
+  experiment 3 training dataloader. Iterates it without a model forward
+  and reports data_time, per-source quota adherence, batch homogeneity,
+  and worker memory growth, so a slow or misconfigured loader is found
   before GPU hours are committed.
 
 
@@ -230,7 +231,7 @@ compilers can consume each other's cells interchangeably.
 ## 5. Test sources
 
 All sources are declared in `sensor_registry.py`, with paths derived
-from the `_COCO_ROOT` constant (default `/workspace/datasets/COCO` —
+from the `_COCO_ROOT` constant (default `/workspace/datasets/COCO`;
 edit it to your dataset location).
 
 | Key | Experiment | GSD | Notes |
@@ -285,11 +286,11 @@ checkpoint inside `<work-root>/<config_stem>/`. Resolution order:
 | 2 | Else match `best_*.pth`; if several, take highest iter. |
 | 3 | Fallback: highest-iter `iter_*.pth` or `epoch_*.pth`. |
 
-This handles every stage with no code change:
+This handles every experiment with no code change:
 
-- **Single-checkpoint runs** (experiments 1, 2, 4) — one
+- Single-checkpoint runs (experiments 1, 2, 4): one
   `best_coco_segm_mAP_50_*` checkpoint; selected directly.
-- **Unified multi-source runs** (experiment 3) — two per-sensor
+- Unified multi-source runs (experiment 3): two per-sensor
   checkpoints, `best_UAV_*` and `best_GE_*`; the highest-iteration one
   is chosen and a warning lists both. Pass `--ckpt-pattern "best_GE_*"`
   to pick one explicitly, or use `evaluate_model.py
@@ -298,9 +299,9 @@ This handles every stage with no code change:
 
 ## 8. GPU acceleration
 
-Inference runs on the GPU. Device selection is explicit — there is no
-silent CPU fallback, since a CPU run is one to two orders of magnitude
-slower and is almost never intended.
+Inference runs on the GPU. Device selection is explicit; the scripts
+never fall back to the CPU on their own, since a CPU run is one to two
+orders of magnitude slower and is almost never intended.
 
 | `--device` | Behaviour |
 |------------|-----------|
@@ -325,7 +326,7 @@ start of every run.
 2. Pass the new key via `--sensors`, or add it to a manifest matrix for
    the transfer experiment.
 
-No other file changes — every evaluator and compiler reads the
+No other file changes; every evaluator and compiler reads the
 registry.
 
 
@@ -344,7 +345,7 @@ Additional notes:
   working directory but must stay together in this folder.
 - The runner and compilers contain no hardcoded dataset paths; all
   dataset paths live in `sensor_registry.py`. Paths are not validated
-  at import time — each script checks at run time and skips a missing
+  at import time; each script checks at run time and skips a missing
   test set with a clear message.
 - The GE test annotation must be a correctly-named COCO file,
   `test_GE.json`. Confirm this before running GE evaluation.

@@ -1,4 +1,4 @@
-# `utils/` — dataset construction, inference, environment checks
+# `utils/`: dataset construction, inference, environment checks
 
 ## Building datasets
 
@@ -6,9 +6,9 @@
 |---|---|
 | `image_vector_to_labelme_pipeline.py` | mosaic + reference polygons → 512 px tiles + LabelMe JSON |
 | `labelme2coco_palm.py` | tiles → COCO, straight into the layout the dataset configs read |
-| `jobs_example.json` | the job file to copy and edit; **keep yours** — it is the record of how a dataset was built |
-| `labels.txt` | the class definition. Match it exactly when extending a dataset |
-| **`TILING_README.md`** | **read this before tiling anything** |
+| `jobs_example.json` | the job file to copy and edit; keep your edited copy, since it is the record of how a dataset was built |
+| `labels.txt` | the class definition; match it exactly when extending a dataset |
+| `TILING_README.md` | tiling policies and procedure; read it before tiling anything |
 
 Set `PALM_DATA_ROOT` and `PALM_OUTPUT_DIR` rather than editing paths in
 the file.
@@ -24,13 +24,13 @@ the file.
 
 | file | what it does |
 |---|---|
-| `handover_selftest.py` | does the environment **import**? |
-| `smoke_build_models.py` | do the models **run**? Builds each and pushes a tensor through it |
+| `handover_selftest.py` | checks that the environment imports and reports versions |
+| `smoke_build_models.py` | builds each model and pushes a tensor through it |
 | `capture_environment.py` | records resolved versions, CUDA/driver, compiled-extension status and weight hashes |
 
-**Run both of the first two.** A backbone can import cleanly and fail on
-its first forward pass — importing touches Python, a kernel launch touches
-the GPU.
+Run both of the first two. A backbone can import cleanly and still fail
+on its first forward pass: importing exercises the Python side, a
+kernel launch exercises the GPU.
 
 ## Analysis
 
