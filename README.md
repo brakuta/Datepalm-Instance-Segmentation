@@ -1,107 +1,121 @@
+<div align="center">
+
 # Date-palm instance segmentation across sensors and scales
+
+**Mask R-CNN with eleven interchangeable backbones (CNN, transformer and
+state-space), benchmarked on date-palm crown delineation from 5 cm UAV
+imagery to 30 cm satellite imagery, and adapted into a country-scale
+palm inventory.**
 
 [![validate](https://github.com/brakuta/Datepalm-Instance-Segmentation/actions/workflows/validate.yml/badge.svg)](https://github.com/brakuta/Datepalm-Instance-Segmentation/actions/workflows/validate.yml)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
+[![Python](https://img.shields.io/badge/Python-3.10-3776AB.svg)](docker/Dockerfile.reconstructed)
+[![PyTorch](https://img.shields.io/badge/PyTorch-2.1.0_cu121-EE4C2C.svg)](docker/Dockerfile.reconstructed)
+[![MMDetection](https://img.shields.io/badge/MMDetection-3.3.0-blue.svg)](https://github.com/open-mmlab/mmdetection)
 
-Code for benchmarking Mask R-CNN with eleven interchangeable backbones
-(CNN, transformer and state-space/Mamba families) on date-palm crown
-instance segmentation, from 5 cm UAV imagery to 30 cm WorldView-3
-satellite imagery, and for the hard-negative adaptation used to run the
-best model as a country-scale inventory. The repository is a fork of
+[Quick start](#1-quick-start) ·
+[Layout](#2-repository-layout) ·
+[Installation](#3-installation) ·
+[Data](#4-data-layout) ·
+[Training](#6-training) ·
+[Evaluation](#7-evaluation) ·
+[Inference](#8-inference-with-the-deployed-model)
+
+</div>
+
+![Overview: three imagery sources are tiled to COCO, one Mask R-CNN detector with eleven interchangeable backbones is trained in five experiments, and the adapted model produces a country-scale palm inventory.](docs/figures/overview.svg)
+
+The repository is a fork of
 [MMDetection](https://github.com/open-mmlab/mmdetection) 3.3.0: it adds
-project configs, backbone wrappers and tooling, and vendors the MMDetection
-train/test entry points unchanged.
-
-The imagery, annotations and trained checkpoints are not distributed
-(see [What is not included](#9-what-is-not-included)). Everything needed
-to rebuild the environment, prepare data in the expected format, retrain
-every model and reproduce the evaluation is included.
-
-## Contents
-
-1. [Quick start](#1-quick-start)
-2. [Repository layout](#2-repository-layout)
-3. [Installation](#3-installation)
-4. [Data layout](#4-data-layout)
-5. [Data preparation](#5-data-preparation)
-6. [Training](#6-training)
-7. [Evaluation](#7-evaluation)
-8. [Inference with the deployed model](#8-inference-with-the-deployed-model)
-9. [What is not included](#9-what-is-not-included)
-10. [Repository checks](#10-repository-checks)
-11. [Citation and licence](#11-citation-and-licence)
+project configs, backbone wrappers and tooling, and vendors the
+MMDetection train/test entry points unchanged. The imagery, annotations
+and trained checkpoints are not distributed
+([`WITHHELD.md`](WITHHELD.md) lists what is absent and why); everything
+needed to rebuild the environment, prepare data in the expected format,
+retrain every model and reproduce the evaluation is here.
 
 ## 1. Quick start
 
+**Step 1 — clone and build the environment** (1–2 hours; kernel
+compilation dominates):
+
 ```bash
-# 1. clone
 git clone https://github.com/brakuta/Datepalm-Instance-Segmentation.git
 cd Datepalm-Instance-Segmentation
-
-# 2. build the environment (1-2 hours; kernel compilation dominates)
 docker build -f docker/Dockerfile.reconstructed -t mamba-mmdet:rebuilt .
+```
 
-# 3. start the container with your data mounted
+**Step 2 — start the container** with your data and checkpoints mounted:
+
+```bash
 docker run --gpus all -it --shm-size=16g \
     -v /path/to/datasets:/workspace/datasets \
     -v /path/to/checkpoints:/workspace/mmdetection/checkpoints \
     mamba-mmdet:rebuilt
+```
 
-# 4. verify the installation (inside the container)
+**Step 3 — verify the installation** (inside the container; works
+without any data, run it before anything else):
+
+```bash
 python configs/Custom/utils/handover_selftest.py     # imports and versions
-python configs/Custom/utils/smoke_build_models.py    # builds every model, runs a forward pass
+python configs/Custom/utils/smoke_build_models.py    # builds every model, one forward pass
+```
 
-# 5. train a model (see section 6 for the full config list)
+**Step 4 — train and test a model.** This needs the datasets in place
+(sections 4 and 5) and the pretrained backbone weights listed in
+`weights.yaml`:
+
+```bash
 python tools/train.py configs/Custom/1_single_sensor_uav_5cm/maskrcnn_r50_uav5cm.py
 
-# 6. test a trained model
 python tools/test.py configs/Custom/1_single_sensor_uav_5cm/maskrcnn_r50_uav5cm.py \
     work_dirs/maskrcnn_r50_uav5cm/best_coco_segm_mAP_50_iter_XXXX.pth
 ```
 
-Steps 5 and 6 need the datasets in place first (sections 4 and 5) and the
-pretrained backbone weights listed in `weights.yaml`. Step 4 works without
-data and should be run before anything else.
+Section 6 lists all 67 experiment configs; swapping the config file is
+the only change needed to train a different backbone or experiment.
 
 ## 2. Repository layout
 
-```
-configs/Custom/
-  1_single_sensor_uav_5cm/    experiment 1: backbone benchmark on UAV 5 cm
-  2_pooled_15cm_ge_aerial/    experiment 2: Google Earth + aerial pooled at 15 cm
-  3_unified_multisource/      experiment 3: one model on all three sources
-  4_satellite_wv3_30cm/       experiment 4: WorldView-3 30 cm transfer
-  5_deployment_finetune/      experiment 5: hard-negative adaptation, deployed model
+The five experiments, each in its own folder under `configs/Custom/` with
+its own README:
 
-  _base_palm/                 shared dataset, schedule, hook and sampler definitions,
-                              inherited by every experiment config
-  utils/                      dataset building, installation checks, inference helpers
-  Evaluation/                 metrics engine, per-model evaluation, result compilation
-  Feature_Analysis/           representation-level analysis (CKA, Bures, separability)
-  Finetune_HN/                hard-negative mining and threshold calibration
-  tools_staged/               experiment 4 tooling (budget manifests, stem inflation)
+| | experiment | imagery | configs |
+|---|---|---|---|
+| **1** | [`1_single_sensor_uav_5cm/`](configs/Custom/1_single_sensor_uav_5cm) — backbone benchmark on a fixed sensor | UAV, 5 cm | 18 |
+| **2** | [`2_pooled_15cm_ge_aerial/`](configs/Custom/2_pooled_15cm_ge_aerial) — two 15 cm sources pooled | Google Earth + aerial | 10 |
+| **3** | [`3_unified_multisource/`](configs/Custom/3_unified_multisource) — one model on all three sources | UAV + GE + aerial | 11 |
+| **4** | [`4_satellite_wv3_30cm/`](configs/Custom/4_satellite_wv3_30cm) — satellite transfer with a simulation prior and an annotation-budget ladder | WorldView-3, 30 cm | 24 |
+| **5** | [`5_deployment_finetune/`](configs/Custom/5_deployment_finetune) — hard-negative adaptation of the deployed model | GE, 15 cm, national | 4 |
 
-mmdet/models/backbones/       backbone wrappers; contain no architecture code
-palm_inference/               tiled, resumable, georeferenced inference pipeline
-docker/                       Dockerfile.reconstructed, the environment recipe
-tools/                        train.py, test.py (vendored from MMDetection),
-                              install_backbones.py, validate_repo.py
-.github/workflows/            CI
+Supporting code:
 
-README.md          this page
-RESULTS.md         how to regenerate the result tables
-THIRD_PARTY.md     upstream projects, pinned commits and licences
-WITHHELD.md        files deliberately not published, and why
-weights.yaml       every model weight by source and SHA256
-requirements.txt   pinned versions; read the ordering note inside
-CITATION.cff  CONTRIBUTING.md  LICENSE
-```
+| path | contents |
+|---|---|
+| [`configs/Custom/_base_palm/`](configs/Custom/_base_palm) | shared dataset, schedule, hook and sampler definitions, inherited by every experiment config |
+| [`configs/Custom/utils/`](configs/Custom/utils) | dataset building, installation checks, inference helpers |
+| [`configs/Custom/Evaluation/`](configs/Custom/Evaluation) | metrics engine, per-model evaluation, result compilation |
+| [`configs/Custom/Feature_Analysis/`](configs/Custom/Feature_Analysis) | representation-level analysis (CKA, Bures fidelity, separability) |
+| [`configs/Custom/Finetune_HN/`](configs/Custom/Finetune_HN) | hard-negative mining and threshold calibration |
+| [`configs/Custom/tools_staged/`](configs/Custom/tools_staged) | experiment 4 tooling (budget manifests, stem inflation) |
+| [`mmdet/models/backbones/`](mmdet/models/backbones) | backbone wrappers; contain no architecture code |
+| [`palm_inference/`](palm_inference) | tiled, resumable, georeferenced inference pipeline |
+| [`docker/`](docker) | `Dockerfile.reconstructed`, the environment recipe |
+| [`tools/`](tools) | `train.py`, `test.py` (vendored from MMDetection), `install_backbones.py`, `validate_repo.py` |
 
-Every folder has its own README with details specific to that part.
+Reference documents at the root:
 
-Each experiment folder corresponds to one part of the study. The
-manuscript and some historical documents refer to them by internal stage
-names:
+| file | contents |
+|---|---|
+| [`weights.yaml`](weights.yaml) | every model weight by source and SHA256 |
+| [`THIRD_PARTY.md`](THIRD_PARTY.md) | upstream projects, pinned commits and licences |
+| [`WITHHELD.md`](WITHHELD.md) | files deliberately not published, and why |
+| [`requirements.txt`](requirements.txt) | pinned versions; read the ordering note inside |
+| [`CONTRIBUTING.md`](CONTRIBUTING.md) · [`CITATION.cff`](CITATION.cff) · [`LICENSE`](LICENSE) | contributing, citation and licence |
+
+<details>
+<summary>Internal stage names used in the manuscript and historical documents</summary>
 
 | folder | internal name |
 |---|---|
@@ -110,6 +124,8 @@ names:
 | `3_unified_multisource` | `maskrcnn_palm_stagec` (Stage C) |
 | `4_satellite_wv3_30cm` | `maskrcnn_palm_staged` (Stage D) |
 | `5_deployment_finetune` | `maskrcnn_palm_finetune_hn` |
+
+</details>
 
 ## 3. Installation
 
@@ -212,37 +228,56 @@ model is first built and need network access at that moment.
 ## 4. Data layout
 
 All datasets are COCO-format instance segmentation sets with a single
-class, `DatePalm`. The dataset configs in `configs/Custom/_base_palm/`
-expect the following trees under one root (the original work used
-`/workspace/datasets/COCO/`; either mount your data there or edit
-`data_root` in the dataset configs and keep
-`configs/Custom/Evaluation/sensor_registry.py` consistent with it):
+class, `DatePalm`, one folder per sensor under a common root:
+
+| dataset | source | GSD | tiles | used by experiment |
+|---|---|---|---|---|
+| `UAV_5cm/` | UAV orthomosaics | 5 cm | 1024 × 1024 | 1, 3 |
+| `GE_15cm/` | Google Earth | 15 cm | 1024 × 1024 | 2, 3, 5 |
+| `Aerial_15cm/` | aerial survey | 15 cm | 1024 × 1024 | 2, 3 |
+| `Sat_30cm/` | WorldView-3 | 30 cm | 512 × 512 | 4 |
+| `GE_30sim/` | GE 15 cm, degraded to simulate 30 cm | 30 cm | 512 × 512 | 4 (pre-training) |
+
+Each sensor folder contains one image directory per split and an
+`Annotations/` directory with the matching COCO JSON. The original work
+kept everything under `/workspace/datasets/COCO/`; either mount your data
+there or edit `data_root` in the dataset configs and keep
+`configs/Custom/Evaluation/sensor_registry.py` consistent with it.
+
+<details>
+<summary>Full directory tree with the exact split and annotation names</summary>
 
 ```
 <COCO root>/
-  UAV_5cm/                          # experiment 1; also pooled into experiment 3
-    train_UAV/  val_UAV/  test_UAV/           # 1024 x 1024 tiles
+  UAV_5cm/
+    train_UAV/  val_UAV/  test_UAV/
     Annotations/train_UAV.json  val_UAV.json  test_UAV.json
-  GE_15cm/                          # experiments 2, 3, 5
-    train_GE/  val_GE/  test_GE/              # 512 x 512 tiles
+  GE_15cm/
+    train_GE/  val_GE/  test_GE/
     Annotations/train_GE.json  val_GE.json  test_GE.json
-  Aerial_15cm/                      # experiments 2, 3
+  Aerial_15cm/
     train_aerial/  val_aerial/  test_aerial/
     Annotations/train_aerial.json  val_aerial.json  test_aerial.json
-  Sat_30cm/                         # experiment 4 (real WorldView-3)
+  Sat_30cm/
     train_sat/  val_sat/  test_sat/
     Annotations/train_sat.json  val_sat.json  test_sat.json
-  GE_30sim/                         # experiment 4 (simulated 30 cm pre-training)
+  GE_30sim/
     train/  val/  test/
     Annotations/GE_30sim_train.json  GE_30sim_val.json  GE_30sim_test.json
 ```
 
-Each dataset config header states the tile counts and provenance of its
-corpus. Before training, check three paths in your copies of the configs:
-`data_root` in the dataset files, `pretrained=` in the per-backbone
-configs (where the ImageNet weights sit), and `work_dir` (where runs
-write; experiments 1 and 2 use relative `./work_dirs/`, the others ship
-with the original machine's absolute paths).
+</details>
+
+Each dataset config header in `configs/Custom/_base_palm/` states the
+tile counts and provenance of its corpus. Before training, check three
+paths in your copies of the configs:
+
+1. `data_root` in the dataset files;
+2. `pretrained=` in the per-backbone configs, pointing at the ImageNet
+   weights from `weights.yaml`;
+3. `work_dir`, where runs write. Experiments 1 and 2 use relative
+   `./work_dirs/`; the others ship with the original machine's absolute
+   paths.
 
 ## 5. Data preparation
 
@@ -273,12 +308,16 @@ widening pretrained stems for the 8-band multispectral runs
 
 ## 6. Training
 
-Each experiment folder holds one config per backbone. The backbones
-compared are ResNet-50/101 and ConvNeXt-T (CNN); Swin-T/S and PVTv2-B2
-(transformer); VMamba, Spatial-Mamba, GroupMamba, EfficientVMamba and
-MambaVision (state-space); and MambaOut, which removes the state-space
-component and is included as a control, not as a Mamba model. Training is
-always:
+Each experiment folder holds one config per backbone:
+
+| family | backbones |
+|---|---|
+| CNN | ResNet-50, ResNet-101, ConvNeXt-T |
+| Transformer | Swin-T, Swin-S, PVTv2-B2 |
+| State-space | VMamba, Spatial-Mamba, GroupMamba, EfficientVMamba, MambaVision |
+| Control | MambaOut, the ablation with the state-space component removed |
+
+Training is always:
 
 ```bash
 python tools/train.py <config> [--work-dir <dir>]
@@ -364,10 +403,9 @@ python configs/Custom/Evaluation/compile_cross_transfer.py --manifest <manifest>
 
 `sensor_registry.py` in that folder is the single source of truth for
 sensor names, annotation paths and evaluation protocols; keep it
-consistent with your `data_root`. [`RESULTS.md`](RESULTS.md) explains how
-the manuscript tables are regenerated and what to check before comparing
-numbers across experiments. Result tables themselves will be added there
-on publication.
+consistent with your `data_root`. The Evaluation README also lists what
+to check before comparing numbers across experiments (training budgets,
+the MambaOut control, the detection cap).
 
 ## 8. Inference with the deployed model
 
@@ -397,22 +435,7 @@ Three settings to check before trusting an output map:
    pixels across and will not be detected. Resolution matters more than
    any flag.
 
-## 9. What is not included
-
-- **Imagery, annotations and trained checkpoints.** The imagery is
-  licensed to the project and cannot be redistributed. Every config
-  needed to retrain is here.
-- **Pretrained weights.** Recorded in [`weights.yaml`](weights.yaml) by
-  source and hash instead of being redistributed; see section 3.5.
-- **The Google Earth acquisition tooling.** The imagery it retrieves is
-  subject to the provider's terms. Nothing in the modelling code depends
-  on how imagery was obtained. External very-high-resolution basemap
-  imagery was used for testing only, never for training.
-
-The full list, including internal handover files that other documents
-mention, is in [`WITHHELD.md`](WITHHELD.md).
-
-## 10. Repository checks
+## 9. Repository checks
 
 CI runs on every push, needs no GPU, torch or network, and finishes in
 seconds. The same check runs locally:
@@ -427,7 +450,7 @@ in documentation, shell scripts and docstrings exist, that
 data artefacts have been committed, and that markdown links are intact.
 Run it before opening a pull request; `CONTRIBUTING.md` has the rest.
 
-## 11. Citation and licence
+## 10. Citation and licence
 
 Until the manuscript is published, please cite this repository (see
 `CITATION.cff`), along with MMDetection and the upstream backbone

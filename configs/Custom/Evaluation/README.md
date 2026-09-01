@@ -350,6 +350,26 @@ Additional notes:
 - The GE test annotation must be a correctly-named COCO file,
   `test_GE.json`. Confirm this before running GE evaluation.
 
+Before comparing numbers across experiments, three things are easy to
+miss:
+
+1. Training budget. The experiments did not all run the same number of
+   iterations. Check the schedule each config inherits
+   (`_base_palm/schedule_*.py`) before comparing across experiments;
+   `_base_palm/STAGE_C_REDESIGN.md` documents a case where two
+   experiments were compared while training under different precision
+   and optimiser settings.
+2. MambaOut is not a state-space model. It is the ablation with the SSM
+   removed; counting it among the Mamba family inflates that family's
+   spread and misreads the control as a result.
+3. The detection cap. The deployed config raises `max_per_img`. The cap
+   binds only in dense plantations, and no validation tile was that
+   dense, so a metric computed on validation cannot show its effect
+   either way.
+
+For experiment 4, `configs/Custom/tools_staged/summarize_stage_d.py`
+compiles the satellite-transfer scores from the run logs.
+
 
 ## 11. Troubleshooting
 

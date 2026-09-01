@@ -1,0 +1,100 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 980 330" font-family="Helvetica, Arial, sans-serif">
+  <!-- Repository overview: imagery -> tiling -> benchmark -> experiments -> deployment.
+       Flat design; Okabe-Ito family colours (CNN blue, transformer orange, SSM green, ablation grey). -->
+  <rect x="0" y="0" width="980" height="330" fill="#f7f7f5"/>
+
+  <!-- column 1: imagery -->
+  <text x="100" y="34" font-size="13" font-weight="bold" fill="#444444">Imagery</text>
+  <g font-size="13" fill="#1a1a1a">
+    <rect x="20" y="48"  width="160" height="46" rx="6" fill="#ffffff" stroke="#b9b9b4"/>
+    <text x="100" y="67" text-anchor="middle" font-weight="bold">UAV</text>
+    <text x="100" y="84" text-anchor="middle" fill="#555555">5 cm GSD</text>
+    <rect x="20" y="104" width="160" height="46" rx="6" fill="#ffffff" stroke="#b9b9b4"/>
+    <text x="100" y="123" text-anchor="middle" font-weight="bold">Google Earth + aerial</text>
+    <text x="100" y="140" text-anchor="middle" fill="#555555">15 cm GSD</text>
+    <rect x="20" y="160" width="160" height="46" rx="6" fill="#ffffff" stroke="#b9b9b4"/>
+    <text x="100" y="179" text-anchor="middle" font-weight="bold">WorldView-3</text>
+    <text x="100" y="196" text-anchor="middle" fill="#555555">30 cm GSD, 8-band</text>
+  </g>
+
+  <!-- arrow 1 -->
+  <line x1="188" y1="127" x2="222" y2="127" stroke="#777777" stroke-width="1.5"/>
+  <path d="M 222 127 l -7 -4 v 8 z" fill="#777777"/>
+
+  <!-- column 2: tiling -->
+  <text x="298" y="34" font-size="13" font-weight="bold" fill="#444444">Data preparation</text>
+  <rect x="230" y="86" width="136" height="82" rx="6" fill="#ffffff" stroke="#b9b9b4"/>
+  <g font-size="13" fill="#1a1a1a">
+    <text x="298" y="108" text-anchor="middle" font-weight="bold">Tiling</text>
+    <text x="298" y="126" text-anchor="middle" fill="#555555">512 / 1024 px tiles</text>
+    <text x="298" y="143" text-anchor="middle" fill="#555555">LabelMe &#8594; COCO</text>
+    <text x="298" y="160" text-anchor="middle" fill="#555555">class: DatePalm</text>
+  </g>
+
+  <!-- arrow 2 -->
+  <line x1="374" y1="127" x2="408" y2="127" stroke="#777777" stroke-width="1.5"/>
+  <path d="M 408 127 l -7 -4 v 8 z" fill="#777777"/>
+
+  <!-- column 3: detector and backbones -->
+  <text x="514" y="34" text-anchor="middle" font-size="13" font-weight="bold" fill="#444444">Mask R-CNN, 11 backbones</text>
+  <rect x="416" y="48" width="196" height="230" rx="6" fill="#ffffff" stroke="#b9b9b4"/>
+  <g font-size="12.5">
+    <rect x="428" y="62" width="86" height="24" rx="4" fill="#d3e5f2"/>
+    <text x="471" y="78" text-anchor="middle" fill="#1a1a1a">ResNet-50</text>
+    <rect x="518" y="62" width="86" height="24" rx="4" fill="#d3e5f2"/>
+    <text x="561" y="78" text-anchor="middle" fill="#1a1a1a">ResNet-101</text>
+    <rect x="428" y="90" width="86" height="24" rx="4" fill="#d3e5f2"/>
+    <text x="471" y="106" text-anchor="middle" fill="#1a1a1a">ConvNeXt-T</text>
+    <rect x="518" y="90" width="86" height="24" rx="4" fill="#f6e3c0"/>
+    <text x="561" y="106" text-anchor="middle" fill="#1a1a1a">Swin-T/S</text>
+    <rect x="428" y="118" width="86" height="24" rx="4" fill="#f6e3c0"/>
+    <text x="471" y="134" text-anchor="middle" fill="#1a1a1a">PVTv2-B2</text>
+    <rect x="518" y="118" width="86" height="24" rx="4" fill="#cdeadd"/>
+    <text x="561" y="134" text-anchor="middle" fill="#1a1a1a">VMamba</text>
+    <rect x="428" y="146" width="86" height="24" rx="4" fill="#cdeadd"/>
+    <text x="471" y="162" text-anchor="middle" fill="#1a1a1a">Spatial-Mamba</text>
+    <rect x="518" y="146" width="86" height="24" rx="4" fill="#cdeadd"/>
+    <text x="561" y="162" text-anchor="middle" fill="#1a1a1a">GroupMamba</text>
+    <rect x="428" y="174" width="86" height="24" rx="4" fill="#cdeadd"/>
+    <text x="471" y="190" text-anchor="middle" fill="#1a1a1a">Eff.VMamba</text>
+    <rect x="518" y="174" width="86" height="24" rx="4" fill="#cdeadd"/>
+    <text x="561" y="190" text-anchor="middle" fill="#1a1a1a">MambaVision</text>
+    <rect x="428" y="202" width="176" height="24" rx="4" fill="#e3e3e0"/>
+    <text x="516" y="218" text-anchor="middle" fill="#1a1a1a">MambaOut (SSM ablation)</text>
+  </g>
+  <g font-size="11.5" fill="#555555">
+    <rect x="428" y="240" width="10" height="10" fill="#d3e5f2"/><text x="443" y="249">CNN</text>
+    <rect x="480" y="240" width="10" height="10" fill="#f6e3c0"/><text x="495" y="249">Transformer</text>
+    <rect x="428" y="258" width="10" height="10" fill="#cdeadd"/><text x="443" y="267">State-space (Mamba)</text>
+  </g>
+
+  <!-- arrow 3 -->
+  <line x1="620" y1="127" x2="654" y2="127" stroke="#777777" stroke-width="1.5"/>
+  <path d="M 654 127 l -7 -4 v 8 z" fill="#777777"/>
+
+  <!-- column 4: experiments -->
+  <text x="794" y="34" font-size="13" font-weight="bold" fill="#444444">Experiments</text>
+  <g font-size="12.5" fill="#1a1a1a">
+    <rect x="662" y="48" width="264" height="36" rx="6" fill="#ffffff" stroke="#b9b9b4"/>
+    <text x="674" y="63" font-weight="bold">1&#8201;&#8212;&#8201;Single sensor, UAV 5 cm</text>
+    <text x="674" y="78" fill="#555555">18 configs, controlled backbone benchmark</text>
+    <rect x="662" y="90" width="264" height="36" rx="6" fill="#ffffff" stroke="#b9b9b4"/>
+    <text x="674" y="105" font-weight="bold">2&#8201;&#8212;&#8201;Pooled 15 cm, GE + aerial</text>
+    <text x="674" y="120" fill="#555555">10 configs, held-out aerial test</text>
+    <rect x="662" y="132" width="264" height="36" rx="6" fill="#ffffff" stroke="#b9b9b4"/>
+    <text x="674" y="147" font-weight="bold">3&#8201;&#8212;&#8201;Unified multi-source</text>
+    <text x="674" y="162" fill="#555555">11 configs, one model for all sensors</text>
+    <rect x="662" y="174" width="264" height="36" rx="6" fill="#ffffff" stroke="#b9b9b4"/>
+    <text x="674" y="189" font-weight="bold">4&#8201;&#8212;&#8201;WorldView-3 transfer</text>
+    <text x="674" y="204" fill="#555555">24 configs, simulation prior + budget ladder</text>
+    <rect x="662" y="216" width="264" height="36" rx="6" fill="#ffffff" stroke="#b9b9b4"/>
+    <text x="674" y="231" font-weight="bold">5&#8201;&#8212;&#8201;Deployment adaptation</text>
+    <text x="674" y="246" fill="#555555">hard negatives + positive replay</text>
+  </g>
+
+  <!-- arrow down to deployment -->
+  <line x1="794" y1="252" x2="794" y2="270" stroke="#777777" stroke-width="1.5"/>
+  <path d="M 794 270 l -4 -7 h 8 z" fill="#777777"/>
+  <rect x="662" y="274" width="264" height="34" rx="6" fill="#3d5a46"/>
+  <text x="794" y="295" text-anchor="middle" font-size="13" font-weight="bold" fill="#ffffff">Country-scale palm inventory</text>
+</svg>
