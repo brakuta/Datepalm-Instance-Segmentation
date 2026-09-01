@@ -1,13 +1,16 @@
 # What is not in this repository, and why
 
-This repository contains the code for the experiments reported in
-the manuscript. Some things are deliberately absent. They are listed
-here so their absence is a decision on record rather than an
-oversight a reader has to guess about.
+This repository contains the code for the experiments reported in the
+manuscript. Some files are deliberately absent. They are listed here so
+that each omission is documented rather than left for a reader to guess
+about.
 
 ## Google Earth acquisition tooling
 
-Withheld at the authors' discretion. The imagery it retrieves is subject to the provider's terms of service. Nothing in the modelling code depends on how the imagery was obtained: the experiments reproduce from any imagery of comparable resolution.
+Withheld at the authors' discretion. The imagery it retrieves is subject
+to the provider's terms of service. Nothing in the modelling code depends
+on how the imagery was obtained: the experiments reproduce from any
+imagery of comparable resolution.
 
 - `download_ge_tiles.py`
 - `probe_tile_throughput.py`
@@ -23,17 +26,18 @@ Withheld at the authors' discretion. The imagery it retrieves is subject to the 
 
 ## Archive and handover tooling
 
-Specific to retiring the machines this work ran on. Of no use to a reader, and it names private drives and hosts.
+Specific to retiring the machines this work ran on. It is of no use to a
+reader, and it names private drives and hosts.
 
 - `make_project_archive.py`
 - `mirror_verify.py`
 - `verify_backup.py`
 - `reconcile_audits.py`
 - `make_public_repo.py`
-- `docs/handover/FACTS.yml` — the handover fact sheet, including the
+- `docs/handover/FACTS.yml`: the handover fact sheet, including the
   SHA256 identities of the trained checkpoints (which are themselves not
   published)
-- `env_capture/environment.json` — the output of
+- `env_capture/environment.json`: the output of
   `configs/Custom/utils/capture_environment.py` on the original machine,
   including the hash of every weight file present there
 
@@ -63,8 +67,8 @@ No imagery, annotations or trained checkpoints are published here.
 The imagery is licensed to the project and cannot be redistributed.
 
 Third-party pretrained weights are not redistributed either. See
-`weights.yaml`, which records each one by its official source — the
-pinned upstream repository or HuggingFace id — and, for the files
+`weights.yaml`, which records each one by its official source (the
+pinned upstream repository or HuggingFace id) and, for the files
 central to the reported results, by SHA256, so the exact file used
 can be obtained from its source and verified. Where a hash or a
 release-asset URL was not captured before the machines were retired,

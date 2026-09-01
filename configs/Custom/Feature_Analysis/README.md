@@ -1,50 +1,53 @@
 # Feature_Analysis
 
-Representation-level analysis and **publication-grade figures** for the date
-palm multi-resolution benchmark (Stages A–D). The suite quantifies and
-visualises how convolutional (CNN), Transformer, and state-space (Mamba)
-backbones encode date palm crowns across the 5–30 cm resolution continuum, and
-produces the evidence that substantiates the cross-resolution generalisation
-claim beyond aggregate mAP.
+Representation-level analysis and manuscript figures for the date palm
+multi-resolution benchmark (experiments 1–4, internally Stages A–D). The
+suite quantifies and visualises how convolutional (CNN), Transformer, and
+state-space (Mamba) backbones encode date palm crowns across the 5–30 cm
+resolution continuum, and produces the evidence behind the
+cross-resolution generalisation claim beyond aggregate mAP.
 
-The detector is **never modified**: all features are captured through PyTorch
+The detector is never modified: all features are captured through PyTorch
 forward hooks on `model.backbone` and `model.neck`.
 
 ---
 
 ## 1. What it produces
 
-**Quantitative (entire sampled test set, with bootstrap confidence intervals)**
+Quantitative, over the entire sampled test set, with bootstrap confidence
+intervals:
 
-- **Resolution-invariance (headline).** Per backbone, the channel covariance of
-  an FPN level is estimated per resolution and compared across the continuum by
-  trace-normalised **Bures fidelity** — a scale-invariant, registration-free
-  descriptor. Optionally correlated (Spearman) with a supplied cross-resolution
-  mAP gap to yield an *explanatory* result.
-- **Debiased linear CKA** (centred kernel alignment) between backbones at
+- Resolution invariance (the headline result). Per backbone, the channel
+  covariance of an FPN level is estimated per resolution and compared
+  across the continuum by trace-normalised Bures fidelity, a
+  scale-invariant, registration-free descriptor. It can optionally be
+  correlated (Spearman) with a supplied cross-resolution mAP gap to yield
+  an explanatory result.
+- Debiased linear CKA (centred kernel alignment) between backbones at
   matched locations (unbiased HSIC, the Hilbert–Schmidt independence
   criterion; optional RBF variant).
-- **Representational dimensionality** — effective rank and participation ratio.
-- **Crown–background separability** (`deep` phase) — shrinkage-regularised
+- Representational dimensionality: effective rank and participation ratio.
+- Crown–background separability (`deep` phase): shrinkage-regularised
   Mahalanobis d′ between crown and background feature locations, per FPN
-  level and resolution: localises *where in the pyramid* crown evidence is
-  linearly accessible.
-- **Level activation-energy share, eigenspectrum decay, inter-level
-  similarity** (`deep` phase) — each backbone's scale-allocation
-  fingerprint, its dimensionality under coarsening, and whether its pyramid
-  is redundant or scale-specialised.
+  level and resolution. This localises where in the pyramid crown
+  evidence is linearly accessible.
+- Level activation-energy share, eigenspectrum decay, inter-level
+  similarity (`deep` phase): each backbone's scale-allocation
+  fingerprint, its dimensionality under coarsening, and whether its
+  pyramid is redundant or scale-specialised.
 
-**Qualitative (selected representative tiles)**
+Qualitative, on selected representative tiles:
 
-- **Multiscale grids** — rows = backbone families, columns = pyramid levels
+- Multiscale grids: rows = backbone families, columns = pyramid levels
   P2–P5 (or backbone stages C2–C5); PCA-to-RGB structure and activation-
   magnitude overlay.
-- **Composite figure recipes** — rows = backbones (or backbone × stage),
-  columns = an isolated axis (e.g. UAV/Aerial/WV-3 resolution, or a single tile
-  degraded to coarser ground sampling distances).
+- Composite figure recipes: rows = backbones (or backbone × stage),
+  columns = an isolated axis (e.g. UAV/Aerial/WV-3 resolution, or a single
+  tile degraded to coarser ground sampling distances).
 
-All figures are written as vector **PDF** (for the manuscript) and 300-dpi PNG,
-with a colourblind-safe Okabe–Ito family palette and editable embedded fonts.
+All figures are written as vector PDF (for the manuscript) and 300-dpi
+PNG, with a colourblind-safe Okabe–Ito family palette and editable
+embedded fonts.
 
 ---
 
@@ -70,7 +73,7 @@ configs/Custom/Feature_Analysis/
     └── visualization.py  # visualize/composite phases
 ```
 
-The config file (`config_feature_analysis.json`) is **generated**, not
+The config file (`config_feature_analysis.json`) is generated, not
 shipped: step 1 below writes an annotated example, which you then edit.
 
 ## 3. Requirements
@@ -84,10 +87,10 @@ pip install scipy matplotlib pillow --break-system-packages
 
 ## 4. Usage
 
-Run from the **repository root** (so `configs/...` paths resolve), with the
-Stage C checkpoints available (they are not distributed with this
-repository — see `WITHHELD.md`; every config needed to retrain them is
-here).
+Run from the repository root (so `configs/...` paths resolve), with the
+experiment 3 (Stage C) checkpoints available. They are not distributed
+with this repository (see `WITHHELD.md`); every config needed to retrain
+them is here.
 
 ```bash
 # 1. generate the annotated example config, then edit it (models, tile_sets,
@@ -156,21 +159,21 @@ supplement. `level`, `source` (`neck`/`backbone`) and `view`
 
 ### Deep-phase method notes
 
-- **Labelling.** Ground-truth instance masks are rasterised at native tile
+- Labelling. Ground-truth instance masks are rasterised at native tile
   resolution, area-averaged onto each feature grid, and thresholded:
   coverage ≥ 0.50 → crown, ≤ 0.05 → background; intermediate coverage is
   excluded to suppress boundary label noise. Labels are taken at exactly
   the cached subsampled locations, so separability is computed on the same
   samples as CKA and invariance.
-- **Separability estimator.** d′ = √((μ₁−μ₀)ᵀ Σ_w⁻¹ (μ₁−μ₀)) with the
+- Separability estimator. d′ = √((μ₁−μ₀)ᵀ Σ_w⁻¹ (μ₁−μ₀)) with the
   pooled within-class covariance ridged by 1% of its mean variance; tiles
   with fewer than 20 locations in either class are excluded.
-- **Energy statistic.** Per-location mean squared L2 norm, normalised
-  across levels per tile — the per-location statistic removes the 4×
+- Energy statistic. Per-location mean squared L2 norm, normalised
+  across levels per tile; the per-location statistic removes the 4×
   spatial-count imbalance between adjacent strides.
-- **Spectra.** Per-tile channel covariances are trace-normalised before
+- Spectra. Per-tile channel covariances are trace-normalised before
   averaging; α is the negative log–log slope over eigenvalue ranks 5–100.
-- **All CIs** are 95% percentile bootstrap over tiles (default 1,000
+- All CIs are 95% percentile bootstrap over tiles (default 1,000
   resamples).
 - A tile set without `coco_ann` is skipped for separability (with a
   warning); energy, spectra and inter-level similarity are still computed.
