@@ -29,10 +29,10 @@ The repository is a fork of
 [MMDetection](https://github.com/open-mmlab/mmdetection) 3.3.0: it adds
 project configs, backbone wrappers and tooling, and vendors the
 MMDetection train/test entry points unchanged. The imagery, annotations
-and trained checkpoints are not distributed (see
-[What is not included](#9-what-is-not-included)); everything needed to
-rebuild the environment, prepare data in the expected format, retrain
-every model and reproduce the evaluation is here.
+and trained checkpoints are not distributed
+([`WITHHELD.md`](WITHHELD.md) lists what is absent and why); everything
+needed to rebuild the environment, prepare data in the expected format,
+retrain every model and reproduce the evaluation is here.
 
 ## 1. Quick start
 
@@ -108,7 +108,6 @@ Reference documents at the root:
 
 | file | contents |
 |---|---|
-| [`RESULTS.md`](RESULTS.md) | how to regenerate the result tables |
 | [`weights.yaml`](weights.yaml) | every model weight by source and SHA256 |
 | [`THIRD_PARTY.md`](THIRD_PARTY.md) | upstream projects, pinned commits and licences |
 | [`WITHHELD.md`](WITHHELD.md) | files deliberately not published, and why |
@@ -404,10 +403,9 @@ python configs/Custom/Evaluation/compile_cross_transfer.py --manifest <manifest>
 
 `sensor_registry.py` in that folder is the single source of truth for
 sensor names, annotation paths and evaluation protocols; keep it
-consistent with your `data_root`. [`RESULTS.md`](RESULTS.md) explains how
-the manuscript tables are regenerated and what to check before comparing
-numbers across experiments. Result tables themselves will be added there
-on publication.
+consistent with your `data_root`. The Evaluation README also lists what
+to check before comparing numbers across experiments (training budgets,
+the MambaOut control, the detection cap).
 
 ## 8. Inference with the deployed model
 
@@ -437,22 +435,7 @@ Three settings to check before trusting an output map:
    pixels across and will not be detected. Resolution matters more than
    any flag.
 
-## 9. What is not included
-
-- **Imagery, annotations and trained checkpoints.** The imagery is
-  licensed to the project and cannot be redistributed. Every config
-  needed to retrain is here.
-- **Pretrained weights.** Recorded in [`weights.yaml`](weights.yaml) by
-  source and hash instead of being redistributed; see section 3.5.
-- **The Google Earth acquisition tooling.** The imagery it retrieves is
-  subject to the provider's terms. Nothing in the modelling code depends
-  on how imagery was obtained. External very-high-resolution basemap
-  imagery was used for testing only, never for training.
-
-The full list, including internal handover files that other documents
-mention, is in [`WITHHELD.md`](WITHHELD.md).
-
-## 10. Repository checks
+## 9. Repository checks
 
 CI runs on every push, needs no GPU, torch or network, and finishes in
 seconds. The same check runs locally:
@@ -467,7 +450,7 @@ in documentation, shell scripts and docstrings exist, that
 data artefacts have been committed, and that markdown links are intact.
 Run it before opening a pull request; `CONTRIBUTING.md` has the rest.
 
-## 11. Citation and licence
+## 10. Citation and licence
 
 Until the manuscript is published, please cite this repository (see
 `CITATION.cff`), along with MMDetection and the upstream backbone

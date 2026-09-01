@@ -2,7 +2,7 @@
 
 > **Historical record.** This document is the engineering record of the
 > Stage C redesign, written while the work was being done and kept in that
-> form. It is retained because `RESULTS.md` relies on it when interpreting
+> form. It is retained because the evaluation documentation relies on it when interpreting
 > cross-stage comparisons, and because the defect register explains settings
 > that would otherwise look arbitrary. Paths have been updated to the
 > published folder names; the analysis is otherwise as written at the time.
