@@ -1,5 +1,5 @@
 # ==========================================================================
-# maskrcnn_palm_ms15/maskrcnn_convnext_t_ms15.py
+# 2_pooled_15cm_ge_aerial/maskrcnn_convnext_t_ms15.py
 # --------------------------------------------------------------------------
 # Mask R-CNN + ConvNeXt-T on the pooled MS-15 cm corpus
 # (GE 15 cm + Aerial 15 cm, sensor-balanced sampling at alpha=0.3).

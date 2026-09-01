@@ -2,10 +2,13 @@
 
 All settings live here. Pass an instance of `InferenceConfig` to the pipeline
 entry point. Defaults are tuned for:
-  - NVIDIA TITAN RTX (24 GB VRAM) + 64 GB RAM
-  - MambaVision-Small + Mask R-CNN, FP16 inference
-  - 0.15 m GSD Google Earth aerial imagery
+  - a 24 GB GPU + 64 GB RAM
+  - Spatial-Mamba-S + Mask R-CNN, FP16 inference (the deployed model)
+  - 0.15 m GSD (ground sample distance) imagery
   - Mixed input topology (folders of small tiles AND large mosaics)
+
+The path defaults below are placeholders: the CLI (run_inference.py) requires
+all of them explicitly, and programmatic callers must set them too.
 """
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -22,15 +25,15 @@ class InferenceConfig:
     input_roots: List[Path] = field(default_factory=list)
 
     # Where outputs go. One subdirectory per input_root will be created.
-    output_root: Path = Path("/workspace/datasets/palm_inference_output")
+    output_root: Path = Path("palm_inference_output")
 
-    # MMDetection model
+    # MMDetection model. The deployed configuration is
+    # configs/Custom/5_deployment_finetune/maskrcnn_spatialmamba_s_deploy.py;
+    # the trained checkpoint is not distributed (see WITHHELD.md).
     config_file: Path = Path(
-        "configs/Custom/MambaVision/mask_rcnn_mamba_small.py"
+        "configs/Custom/5_deployment_finetune/maskrcnn_spatialmamba_s_deploy.py"
     )
-    checkpoint_file: Path = Path(
-        "work_dirs/mask_rcnn_vmamba_small_palm/best_coco_bbox_mAP_iter_55000.pth"
-    )
+    checkpoint_file: Path = Path("checkpoints/deployed_checkpoint.pth")
 
     # Manifest (resumability) location.
     # If None, defaults to <output_root>/_manifest.parquet

@@ -161,16 +161,16 @@ EXAMPLE_CONFIG = {
     },
     "models": [
         {"label": "ResNet-50", "family": "CNN",
-         "config": "configs/Custom/maskrcnn_palm_stagec/maskrcnn_r50_stagec.py",
+         "config": "configs/Custom/3_unified_multisource/maskrcnn_r50_stagec.py",
          "checkpoint": "/workspace/mmdetection/work_dirs/Stage_C/maskrcnn_r50_stagec/iter_80000.pth"},
         {"label": "ConvNeXt-T", "family": "CNN",
-         "config": "configs/Custom/maskrcnn_palm_stagec/maskrcnn_convnext_t_stagec.py",
+         "config": "configs/Custom/3_unified_multisource/maskrcnn_convnext_t_stagec.py",
          "checkpoint": "/workspace/mmdetection/work_dirs/Stage_C/maskrcnn_convnext_t_stagec/iter_80000.pth"},
         {"label": "Swin-S", "family": "Transformer",
-         "config": "configs/Custom/maskrcnn_palm_stagec/maskrcnn_swin_s_stagec.py",
+         "config": "configs/Custom/3_unified_multisource/maskrcnn_swin_s_stagec.py",
          "checkpoint": "/workspace/mmdetection/work_dirs/Stage_C/maskrcnn_swin_s_stagec/iter_80000.pth"},
         {"label": "SpatialMamba-S", "family": "Mamba",
-         "config": "configs/Custom/maskrcnn_palm_stagec/maskrcnn_spatialmamba_s_stagec.py",
+         "config": "configs/Custom/3_unified_multisource/maskrcnn_spatialmamba_s_stagec.py",
          "checkpoint": "/workspace/mmdetection/work_dirs/Stage_C/maskrcnn_spatialmamba_s_stagec/iter_80000.pth"}
     ],
     "tile_sets": [

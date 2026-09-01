@@ -6,8 +6,9 @@
 #
 # WHAT CHANGED RELATIVE TO v2
 # --------------------------------------------------------------------------
-#  1. batch_size default is 2 (AMP mode). Under PRECISION='fp32' the runtime
-#     deep-merges batch_size=1 and sampler.chunk_size=4 over this file.
+#  1. batch_size ships as 1 with sampler chunk_size 4 (the fp32-safe
+#     setting; AMP runs may raise batch_size as long as chunk_size stays a
+#     multiple of it).
 #  2. chunk_size now tracks batch_size via a single variable (no silent drift
 #     between the two if batch_size is edited).
 #  3. val_dataloader / test_dataloader use persistent_workers=False so their
@@ -31,11 +32,16 @@ prefetch_factor = 4
 
 # Universally beneficial / do not change without reason:
 persistent_workers = True   # TRAIN workers only; val/test set False below.
-batch_size = 1              # AMP default; runtime overrides to 1 under fp32.
-chunk_size = 4     # MUST equal batch_size so each batch is one source.
+batch_size = 1              # fp32-safe default; see note 1 in the header.
+chunk_size = 4     # MUST be a multiple of batch_size so each batch is one source.
 
 # ==========================================================================
-# Data roots  --  MUST match sensor_registry.py.
+# Data roots -- point these at YOUR data layout, and keep them consistent
+# with the roots the evaluation uses (configs/Custom/Evaluation/
+# sensor_registry.py defaults to /workspace/datasets/COCO/...; this file
+# was last used on a machine that mounted the same trees under
+# /root/datasets/). The two must name the same trees or training and
+# evaluation silently read different data.
 # ==========================================================================
 uav_root    = '/root/datasets/COCO/UAV_5cm/'
 ge_root     = '/root/datasets/COCO/GE_15cm/'

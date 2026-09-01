@@ -1,5 +1,5 @@
 # ==========================================================================
-# maskrcnn_palm_stagec/maskrcnn_r50_stagec.py   (v3)
+# 3_unified_multisource/maskrcnn_r50_stagec.py   (v3)
 # --------------------------------------------------------------------------
 # Mask R-CNN + ResNet-50 on the unified Stage C corpus
 # (UAV 5 cm + GE 15 cm + Aerial 15 cm, proportional sampling).

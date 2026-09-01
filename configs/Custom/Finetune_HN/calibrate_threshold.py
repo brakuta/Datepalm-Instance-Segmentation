@@ -38,7 +38,7 @@
 #
 # USAGE
 #   python configs/Custom/Finetune_HN/calibrate_threshold.py \
-#       --config configs/Custom/maskrcnn_palm_finetune_hn/maskrcnn_spatialmamba_s_finetune_hn.py \
+#       --config configs/Custom/5_deployment_finetune/maskrcnn_spatialmamba_s_finetune_hn.py \
 #       --checkpoint work_dirs/Finetune_HN/maskrcnn_spatialmamba_s_finetune_hn/best_coco_segm_mAP_50_iter_4000.pth \
 #       --ann /workspace/datasets/COCO/GE_15cm/Annotations/val_GE.json \
 #       --images /workspace/datasets/COCO/GE_15cm/val_GE \

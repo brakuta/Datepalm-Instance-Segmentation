@@ -1,8 +1,12 @@
-# False-negative (missed-palm) fine-tuning — AOI tiling + hard-positive runbook
+# False-negative (missed-palm) fine-tuning — area-of-interest (AOI) tiling + hard-positive runbook
+
+*FN = false negative. The companion runbook,
+`README_hard_negative_finetune.md`, covers the HN (hard-negative,
+false-positive suppression) round.*
 
 Goal: recover date palms the deployed **Stage C Spatial-Mamba-S (best_GE)**
 model *misses* in specific UAE area types, using new labelled tiles cut from
-the AOI extents you delineated — without losing GE performance or the
+manually delineated AOI extents — without losing GE performance or the
 false-positive gains from the hard-negative round.
 
 Companion to `README_hard_negative_finetune.md`. **They are not
@@ -29,7 +33,7 @@ labelled positives from the failing regime.
 
 ## Step 0 — Diagnose before you annotate (30 minutes, may save days)
 
-Two non-training mechanisms produce "false negatives" in your deployment, and
+Two non-training mechanisms produce "false negatives" in deployment, and
 neither is fixed by retraining. Rule them out first.
 
 **0a. Score threshold.** `palm_inference_pipeline.py` ships `SCORE_THR = 0.35`,
@@ -38,9 +42,9 @@ at 0.10–0.34 are *found by the model and discarded by the pipeline*. Re-run on
 struggle area at `SCORE_THR = 0.05` and compare:
 
 ```bash
-python configs/Custom/utils/palm_inference_pipeline.py infer --only UAE_245 \
+python configs/Custom/utils/palm_inference_pipeline.py infer --only <area_id> \
     --set SCORE_THR=0.05 \
-    --set OUTPUT_DIR='/workspace/results/uae_palms_thr005'
+    --set OUTPUT_DIR='<results_dir>_thr005'
 ```
 
 If most of the missed palms reappear, the fix is **threshold recalibration**
@@ -59,20 +63,20 @@ Only the residual after 0a and 0b is a genuine model failure. Annotate for
 
 ---
 
-## Step 1 — Extract tiles from your images + AOI shapefiles
+## Step 1 — Extract tiles from the imagery + AOI shapefiles
 
-`make_aoi_tiles.py` cuts 1024 px tiles restricted to your AOI polygons, on the
+`make_aoi_tiles.py` cuts 1024 px tiles restricted to the AOI polygons, on the
 **raster's own pixel grid** (integer windows, no resampling) so GSD, radiometry
 and crown scale are bit-identical to the imagery the model trained on.
 
 ```bash
 python configs/Custom/Finetune_HN/make_aoi_tiles.py \
-    --images /workspace/datasets/GE15cm/struggle_areas \
-    --aoi    /workspace/datasets/GE15cm/struggle_areas/extents \
-    --out    /workspace/datasets/COCO/HardPos_GE \
+    --images <ge_imagery>/struggle_areas \
+    --aoi    <aoi_extents_dir_or_shp> \
+    --out    <coco_root>/HardPos_GE \
     --tile 1024 --overlap 0.25 --min-aoi-frac 0.5 \
-    --aoi-id-field name \
-    --seed-labels /workspace/results/uae_palms/UAE_palms_master.gpkg \
+    --aoi-id-field <name_field> \
+    --seed-labels <merged_master.gpkg> \
     --seed-query "score > 0.30" \
     --val-frac 0.2
 ```
@@ -87,33 +91,33 @@ as a `.jgw` + `.prj` beside each tile, plus `tile_footprints.gpkg`.
 
 **Always `--dry-run` first.** It reports how many tiles each image and each AOI
 polygon would produce and writes nothing — the cheapest way to catch a CRS
-mismatch or extents that miss half your imagery:
+mismatch or extents that miss half the imagery:
 
 ```bash
 python configs/Custom/Finetune_HN/make_aoi_tiles.py \
     --images ... --aoi ... --out ... --dry-run
 ```
 
-**If your AOIs are PALM-FREE areas** (e.g. a `No_Datepalm` extent layer), you
-are doing the *hard-negative* round, not this one. Add `--emit-coco empty` and
+**If the AOIs are PALM-FREE areas** (e.g. a dedicated palm-free extent
+layer), that is the *hard-negative* round, not this one. Add `--emit-coco empty` and
 `--overlap 0`: the tool writes `annotations/hard_neg.json` (0 annotations)
 directly, no LabelMe pass is needed, and the output plugs straight into
 `HN_ROOT` in `maskrcnn_spatialmamba_s_finetune_hn.py`. See
 `README_hard_negative_finetune.md` from there.
 
 **Pairing.** `--aoi` takes either one shapefile for everything, or a folder of
-per-image shapefiles matched by filename stem (`UAE_245.tif` ↔ `UAE_245.shp`).
+per-image shapefiles matched by filename stem (`<image>.tif` ↔ `<image>.shp`).
 AOI CRS is reprojected into each raster's CRS automatically.
 
-**`--seed-labels` is the flag that matters.** It clips your existing predicted
+**`--seed-labels` is the flag that matters.** It clips the existing predicted
 crowns into per-tile LabelMe sidecars, so annotation becomes *correction* — add
 the crowns the model missed, delete the ones it invented — instead of
-digitising from scratch. Typically 5–10× faster, and it focuses your attention
-precisely on the errors you are trying to fix.
+digitising from scratch. Typically 5–10× faster, and it focuses the annotator's
+attention precisely on the errors being fixed.
 
 **`--val-frac 0.2` holds out whole AOIs, not individual tiles.** With 25%
 overlap, adjacent tiles share pixels; a tile-level split would leak and inflate
-the recall gain you are about to report. Splitting by AOI is the honest version.
+the reported recall gain. Splitting by AOI is the honest version.
 
 Key knobs:
 
@@ -121,7 +125,7 @@ Key knobs:
 |---|---|---|
 | `--tile` | 1024 | must match the training tile size — do not change |
 | `--overlap` | 0.25 | some overlap stops crowns being cut at every edge |
-| `--min-aoi-frac` | 0.5 | lower to ~0.2 if your extents are small |
+| `--min-aoi-frac` | 0.5 | lower to ~0.2 if the extents are small |
 | `--min-coverage` | 0.5 | drops mostly-nodata tiles |
 | `--stretch` | `none` | **keep `none` for GE** (matches GE_train + inference) |
 | `--max-tiles` | 0 | deterministic cap when the AOIs give more than you can label |
@@ -137,8 +141,8 @@ HardPos_GE/
 └── tiling_provenance.json    every parameter used
 ```
 
-**Vet before labelling.** Open `tile_footprints.gpkg` over your imagery in
-QGIS. Confirm the tiles land where you intended and that AOIs you care about
+**Vet before labelling.** Open `tile_footprints.gpkg` over the imagery in
+QGIS. Confirm the tiles land where intended and that the AOIs of interest
 actually produced tiles. Fixing coverage now costs minutes; after labelling it
 costs days.
 
@@ -177,27 +181,27 @@ Sanity-check before training:
 python -c "
 import json
 for s in ('train','val'):
-    d=json.load(open(f'/workspace/datasets/COCO/HardPos_GE/annotations/{s}_hardpos.json'))
+    d=json.load(open(f'<coco_root>/HardPos_GE/annotations/{s}_hardpos.json'))
     n=len(d['images']); a=len(d['annotations'])
     print(f'{s}: {n} images, {a} anns, {a/max(n,1):.1f} palms/tile')
 "
 ```
 
-If `palms/tile` is far below what you see in the imagery, annotation is
-incomplete — stop and finish it. Also run
-`configs/Custom/utils/clean_coco_degenerate.py` on both files: sub-pixel boxes
-are what produced the `NaN loss_bbox` in Stage D.
+If `palms/tile` is far below what the imagery shows, annotation is
+incomplete — stop and finish it. Also drop zero-area and degenerate
+(sub-pixel) boxes from both COCO files before training: sub-pixel boxes are
+what produced the `NaN loss_bbox` in Stage D.
 
 ---
 
 ## Step 3 — Set the two knobs in the config
 
 Edit the top of
-`configs/Custom/maskrcnn_palm_finetune_hn/maskrcnn_spatialmamba_s_finetune_fn.py`:
+`configs/Custom/5_deployment_finetune/maskrcnn_spatialmamba_s_finetune_fn.py`:
 
-- `GE_ROOT` — your real GE 15 cm COCO root (positives to replay)
+- `GE_ROOT` — the real GE 15 cm COCO root (positives to replay)
 - `HP_ROOT` — the `--out` dir from Step 1
-- `load_from` — **the HN-adapted checkpoint if you already ran the FP round**
+- `load_from` — **the HN-adapted checkpoint if the FP round has already run**
   (chaining preserves the false-positive gains); otherwise Stage C `best_GE`
 - `HP_WEIGHT` — see below
 - `max_iters` — start `6000`
@@ -224,13 +228,13 @@ Read `N_GE` and `N_HP` off `len(images)` in the two COCO files. Stay in the
 export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 export OMP_NUM_THREADS=1 MKL_NUM_THREADS=1
 python tools/train.py \
-    configs/Custom/maskrcnn_palm_finetune_hn/maskrcnn_spatialmamba_s_finetune_fn.py
+    configs/Custom/5_deployment_finetune/maskrcnn_spatialmamba_s_finetune_fn.py
 ```
 
 ~2–3 GPU-hours at 6k iters. **Confirm the realised source mix in the first
 log lines** (the sampler prints per-source quotas) before letting it run long.
 
-Validation runs every 1000 iters on **two** sources and you watch both:
+Validation runs every 1000 iters on **two** sources; watch both:
 
 - `GE/coco/segm_mAP_50` — the forgetting monitor. Must not drop materially.
 - `HPOS/coco/segm_mAP_50` — the held-out AOIs. This is the number that has to
@@ -244,11 +248,11 @@ Three checkpoints are saved so the trade-off is inspectable:
 | `best_GE_*` | GE only | least forgetting |
 | `best_HPOS_*` | new AOIs only | most recall recovered |
 
-Deploy the **mean** one unless you have a reason not to: it cannot buy recall
+Deploy the **mean** one unless there is a reason not to: it cannot buy recall
 by wrecking GE, and it cannot reject the improvement you were seeking.
 
 If `HPOS` mAP barely moves: the tiles probably do not actually contain the
-failure mode (re-check Step 0 — you may have been chasing a threshold problem),
+failure mode (re-check Step 0 — it may have been a threshold problem),
 or `HP_WEIGHT` is too low, or annotation is incomplete. If `GE` mAP drops:
 lower `HP_WEIGHT`, or shorten to 3–4k iters.
 
@@ -262,18 +266,18 @@ feature problem, not a decision-boundary problem, so the backbone trains at
 ## Step 5 — Validate operationally, then recalibrate the threshold
 
 ```bash
-python configs/Custom/utils/palm_inference_pipeline.py infer --only UAE_245 \
-    --set INPUT_PATH='/workspace/datasets/GE15cm' \
-    --set OUTPUT_DIR='/workspace/results/uae_palms_FNcheck' \
+python configs/Custom/utils/palm_inference_pipeline.py infer --only <area_id> \
+    --set INPUT_PATH='<ge_imagery>' \
+    --set OUTPUT_DIR='<results_dir>_FNcheck' \
     --set CHECKPOINT_FILE='work_dirs/Finetune_HN/maskrcnn_spatialmamba_s_finetune_fn/best_mean_segm_mAP_50_iter_XXXX.pth'
 ```
 
 Open the before/after `.gpkg` pair in QGIS on a struggle area **that was not in
-any AOI** — improvement on areas you trained from proves nothing.
+any AOI** — improvement on the areas the model trained from proves nothing.
 
 Then **re-derive the F1-optimal `SCORE_THR`** (the pipeline's calibration
 mode): the score distribution shifts after adaptation, so the old 0.35 is no
-longer the operating point. Report precision/recall per density class on your
+longer the operating point. Report precision/recall per density class on the
 stratified validation sample, not raw counts.
 
 ---
@@ -296,20 +300,20 @@ which source caused it.
 
 ---
 
-## For the manuscript (one paragraph, Methods/Discussion)
+## Summary of the procedure
 
-> The deployed model was adapted to the operational domain in two brief
-> hard-example rounds. First, N₁ tiles containing confirmed false positives
-> (desert shrubs and native trees absent from the training corpus) were added
-> as empty-annotation images. Second, N₂ exhaustively annotated tiles were cut
-> from M delineated areas of interest in which the model under-detected, and
-> used as hard positives. Both rounds fine-tuned briefly (6k iterations,
-> learning rate 1e-5, backbone learning-rate multiplier 0.1) with replay of the
-> original Google Earth training imagery to prevent forgetting. Checkpoints
-> were selected on the mean of held-out Google Earth validation mAP@0.5 and a
-> spatially disjoint held-out subset of the new areas of interest, and the
-> operating threshold was re-calibrated after adaptation. Benchmark checkpoints
-> and their reported metrics are unaffected.
+The deployed model is adapted to the operational domain in two brief
+hard-example rounds. First, tiles containing confirmed false positives
+(desert shrubs and native trees absent from the training corpus) are added
+as empty-annotation images. Second, exhaustively annotated tiles are cut
+from delineated areas of interest in which the model under-detects, and
+used as hard positives. Both rounds fine-tune briefly (a few thousand
+iterations, learning rate 1e-5, backbone learning-rate multiplier 0.1) with
+replay of the original Google Earth training imagery to prevent forgetting.
+Checkpoints are selected on the mean of held-out Google Earth validation
+mAP@0.5 and a spatially disjoint held-out subset of the new areas of
+interest, and the operating threshold is re-calibrated after adaptation.
+Benchmark checkpoints and their reported metrics are unaffected.
 
 Report the before/after on the **stratified validation sample** (recall per
 density class), not the raw detection count — that is the defensible number.

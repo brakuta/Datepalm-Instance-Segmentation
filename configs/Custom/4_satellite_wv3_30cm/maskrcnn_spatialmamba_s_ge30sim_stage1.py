@@ -1,5 +1,5 @@
 # ==========================================================================
-# maskrcnn_palm_staged/maskrcnn_spatialmamba_s_ge30sim_stage1.py
+# 4_satellite_wv3_30cm/maskrcnn_spatialmamba_s_ge30sim_stage1.py
 # --------------------------------------------------------------------------
 # STAGE 1 of the 30cm curriculum: train SpatialMamba on the LARGE simulated-
 # 30cm GE corpus (19,472 tiles), initialised from Stage B GE weights. Learns

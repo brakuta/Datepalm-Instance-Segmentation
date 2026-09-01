@@ -23,7 +23,7 @@
 # Usage
 # -----
 #   python configs/Custom/Evaluation/evaluate_model.py \
-#       --config     configs/Custom/maskrcnn_palm_ms15/maskrcnn_r50_ms15.py \
+#       --config     configs/Custom/2_pooled_15cm_ge_aerial/maskrcnn_r50_ms15.py \
 #       --checkpoint work_dirs/Stage_B/maskrcnn_r50_ms15/best_coco_segm_mAP_50_iter_25000.pth \
 #       --sensors    GE Aerial \
 #       --results-dir results/stage_b

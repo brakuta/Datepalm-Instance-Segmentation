@@ -1,5 +1,5 @@
 # ==========================================================================
-# maskrcnn_palm_stagec/maskrcnn_vmamba_s_stagec.py   (v4)
+# 3_unified_multisource/maskrcnn_vmamba_s_stagec.py   (v4)
 # --------------------------------------------------------------------------
 # Mask R-CNN + VMamba-S on the unified Stage C corpus
 # (UAV 5 cm + GE 15 cm + Aerial 15 cm, proportional sampling). TITAN RTX only.

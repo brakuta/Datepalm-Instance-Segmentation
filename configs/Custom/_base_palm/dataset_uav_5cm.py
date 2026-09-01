@@ -3,10 +3,10 @@
 # --------------------------------------------------------------------------
 # Shared UAV 5 cm dataset definition for the date palm backbone benchmark.
 # This file is detector-agnostic — it defines dataloaders, pipelines, and
-# evaluators only, and is imported by both SOLOv2 and Mask R-CNN configs.
+# evaluators only, and is inherited by the Mask R-CNN configs.
 #
 # Expected dataset layout:
-#   /workspace/datasets/UAV_5cm/
+#   /workspace/datasets/COCO/UAV_5cm/
 #     ├── train_UAV/              ← 1024x1024 tiles, 25% overlap (16,800)
 #     ├── val_UAV/                ← 1024x1024 tiles, 0% overlap   (2,230)
 #     ├── test_UAV/               ← 1024x1024 tiles, 0% overlap   (2,450)
@@ -14,7 +14,7 @@
 #           ├── train_UAV.json
 #           ├── val_UAV.json
 #           └── test_UAV.json
-# =============================================]\1=============================
+# =============================================================================
 
 dataset_type = 'CocoDataset'
 data_root = '/workspace/datasets/COCO/UAV_5cm/'

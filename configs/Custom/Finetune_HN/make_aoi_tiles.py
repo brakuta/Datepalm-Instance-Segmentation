@@ -68,7 +68,7 @@
 # NEXT STEPS after this script (see README_false_negative_finetune.md)
 #   1. annotate  <out>/images_train  and  <out>/images_val  in LabelMe
 #   2. labelme2coco  ->  <out>/annotations/train_hardpos.json , val_hardpos.json
-#   3. train with maskrcnn_palm_finetune_hn/maskrcnn_spatialmamba_s_finetune_fn.py
+#   3. train with 5_deployment_finetune/maskrcnn_spatialmamba_s_finetune_fn.py
 # =============================================================================
 
 from __future__ import annotations
@@ -933,7 +933,7 @@ def run(args):
         for p, n, sub in coco_written:
             print(f'  COCO       : {p}  ({n} images, 0 annotations, from {sub})')
         print('  -> NO annotation pass needed: these are hard NEGATIVES.')
-        print('NEXT: set HN_ROOT in maskrcnn_palm_finetune_hn/'
+        print('NEXT: set HN_ROOT in 5_deployment_finetune/'
               'maskrcnn_spatialmamba_s_finetune_hn.py to')
         print(f'      {out}')
         print('      then: python tools/train.py <that config>')
@@ -943,11 +943,11 @@ def run(args):
         print('  -> open the tiles in LabelMe: ADD the missed crowns, DELETE '
               'the wrong ones. Every real palm must be labelled.')
         print('NEXT: labelme2coco on each images_* folder, then train with '
-              'maskrcnn_palm_finetune_hn/maskrcnn_spatialmamba_s_finetune_fn.py')
+              '5_deployment_finetune/maskrcnn_spatialmamba_s_finetune_fn.py')
     else:
         print('  -> annotate every palm in LabelMe (no seeding requested)')
         print('NEXT: labelme2coco on each images_* folder, then train with '
-              'maskrcnn_palm_finetune_hn/maskrcnn_spatialmamba_s_finetune_fn.py')
+              '5_deployment_finetune/maskrcnn_spatialmamba_s_finetune_fn.py')
     print('=' * 70)
 
 

@@ -164,7 +164,7 @@ class PerSensorBestCheckpointHook(Hook):
 
             self._best[sensor] = value
             # Build a clean filename matching the convention documented in
-            # configs/Custom/Evaluation/compile_palm_results_ms15.py:
+            # configs/Custom/Evaluation/compile_results.py:
             #   best_<sensor>_<bare_metric>_iter_<N>.pth
             #   e.g. best_UAV_segm_mAP_50_iter_25000.pth
             # The metric key carries a redundant '<sensor>/' prefix from

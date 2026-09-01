@@ -1,9 +1,17 @@
 # Stage D — WorldView-3 30 cm feasibility (v4)
 
-Supersedes v3 (four backbones × three arms + budget curve). **v4 is a
-feasibility section, not a study**: two arms, four backbones, eight runs, one
-table. The scope cut is deliberate — the manuscript is already long, and every
-additional axis costs a methods subsection, not just GPU hours.
+> **Historical design memo.** This is the Stage D design memo as it was
+> written during the work. The folder itself ships the **full** config
+> matrix — 5 `*_ge30sim_stage1`, 11 `*_staged_ft`, 4 `*_staged_full` and 4
+> `*_staged_ms` configs, 24 in total — regardless of the narrower subset
+> this memo proposes reporting. Where the memo and this folder's
+> `README.md` disagree about what exists, the `README.md` is current.
+
+Supersedes v3 (four backbones × three arms + budget curve). **v4 frames
+Stage D as a feasibility experiment, not a full study**: two arms, four
+backbones, eight runs, one table. The scope cut was deliberate — every
+additional experimental axis demands its own methodological documentation and
+validation, not just GPU hours.
 
 ## 1. The one question
 
@@ -30,14 +38,13 @@ Everything that does not answer that question is out.
 
 Plus **zero-shot** Stage C → WV-3 (no training; evaluation only).
 
-## 3. What the arms actually compare — READ BEFORE WRITING METHODS
+## 3. What the arms actually compare
 
 **b0 vs cf is an INITIALISATION comparison, not a fine-tuning one.** Both
 arms train every weight, on the same data, with the same schedule, samplers,
 caps and budget. The only difference is where the optimiser starts: natural
 images or a cross-resolution remote-sensing model. Arm cf is a *warm start*,
-and calling it a fine-tune in the manuscript would misdescribe it — nothing is
-frozen and the learning rate is the full 1e-4.
+not a fine-tune — nothing is frozen and the learning rate is the full 1e-4.
 
 Only arm *c* is fine-tuning in the strict sense: stem and first two stages
 frozen, the rest moving at 2e-5 × 0.01, the model largely preserved.
@@ -86,13 +93,13 @@ illustrative case of why the conservative recipe fails.
 Stage C ran 120,000 iterations at per-GPU batch 1 = **120,000 samples**.
 Stage D arm B0 runs 60,000 iterations at per-GPU batch 2 = **120,000 samples**.
 The exposure is identical; only the batch size, and therefore the iteration
-count, differs. Report samples seen alongside iterations and the question does
-not arise.
+count, differs. With samples seen recorded alongside iterations, the question
+does not arise.
 
 Both stages use effective batch 4 and are governed by EarlyStopping on
-`coco/segm_mAP_50`; report the selected iteration for every run.
+`coco/segm_mAP_50`; the selected iteration is recorded for every run.
 
-**Disclose in Methods, do not silently correct:** Stage C is not internally
+**A disclosed non-uniformity in Stage C:** Stage C is not internally
 uniform. All four backbones saw 120,000 samples at batch 1, but
 `accumulative_counts` was 2 for ConvNeXt-T, Swin-S and MambaVision-S and 4 for
 SpatialMamba-S — effective batch 2 versus 4, and 60,000 versus 30,000
@@ -100,17 +107,16 @@ optimiser steps. The comment in `schedule_stagec.py` claims effective batch 4
 throughout; the built configs disagree, because
 `dataset_UAV_GE_Aerial_pooled_C.py` sets `batch_size = 1` and the schedule's
 `_BATCH` never reaches the dataloader. The runs are published and cannot be
-redone. State it plainly as a per-backbone memory accommodation with equal
-samples and unequal optimiser steps — it cuts against the convenient
-direction, since SpatialMamba-S is the strongest model, which makes disclosure
-cheap and concealment expensive. Stage D is uniform precisely so this does not
-recur.
+redone, so this stands as a per-backbone memory accommodation with equal
+samples and unequal optimiser steps — a detail that cuts against the
+convenient direction, since SpatialMamba-S is the strongest model. Stage D is
+uniform precisely so this does not recur.
 
 ## 4. Cut from v3, and why
 
 | Cut | Reason |
 |---|---|
-| **Arm S** (GE-30sim simulation prior) | Requires a full methods subsection documenting the simulation (resampling, PSF, noise, codec) and a defence of its realism. That is the companion paper. The four `*_ge30sim_stage1` checkpoints are already trained and become its starting material — not wasted, just not here. |
+| **Arm S** (GE-30sim simulation prior) | The stage-1 arm is a **simulation prior**, not a fine-tune: it requires full documentation of the simulation (resampling, PSF, noise, codec) and a defence of its realism, which is deferred to companion work. The trained `*_ge30sim_stage1` checkpoints become that work's starting material — not wasted, just not here. |
 | **Budget curve (BU)** | The annotation-cost study is a separate contribution; it reads as a second paper inside this one. |
 | **Backward evaluation / forgetting note** | Another axis, another table. |
 | **Simulation sensitivity** | Already deferred in v3; stays deferred. |
@@ -133,27 +139,33 @@ overlap writes each training crown up to four times.
 
 Supersedes the 2,413 figure in `schedule_staged_ft.py` and the 267/142/124 in
 the header of `dataset_sat_30cm_staged.py`; both are stale. Confirm before
-launching:
+launching (`<data_root>` is the `data_root` set in
+`_base_palm/dataset_sat_30cm_staged.py`):
 
 ```bash
 for s in train val test; do
   python -c "import json;d=json.load(open(
-    '/workspace/datasets/COCO/Sat_30cm/Annotations/${s}_sat.json'));
+    '<data_root>/Annotations/${s}_sat.json'));
     print('${s}', len(d['images']), 'images', len(d['annotations']), 'anns')"
 done
 ```
 
 Tile density drove the detection cap: up to 622 crowns in a training tile, 333
-in test, 327 in val, with 31 tiles above the Stage C base cap of 300. All eight
-Stage D configs raise `test_cfg.rcnn.max_per_img` to 1000 so the cap cannot
-decide recall; the shared base is untouched and the Stage C benchmark still
-reports at 300.
+in test, 327 in val, with 31 tiles above the Stage C base cap of 300. The
+eight configs of this memo's matrix — the four selected backbones in the
+`_staged_ft` and `_staged_full` arms — raise `test_cfg.rcnn.max_per_img` to
+1000 so the cap cannot decide recall, and the four `_staged_ms` configs
+inherit the raised cap from their `_staged_full` bases (twelve configs in
+total carry it; `maskrcnn_spatialmamba_s_ge30sim_stage1.py` also sets 1000
+inside its own `test_cfg`). The `_staged_ft` configs for the seven remaining
+benchmark backbones keep the base value, the shared base is untouched, and
+the Stage C benchmark still reports at 300.
 
 Also confirm the SpatialMamba ImageNet weights exist, or arm B0 starts from
 random init and silently becomes "from scratch":
 
 ```bash
-ls -la /workspace/mmdetection/checkpoints/spatialmamba/spatialmamba_small_in1k.pth
+ls -la <checkpoints_dir>/spatialmamba/spatialmamba_small_in1k.pth
 # and in the run log, expect "Successfully load ckpt", not "Failed loading"
 ```
 
@@ -170,7 +182,7 @@ export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 for BB in spatialmamba_s mambavision_s swin_s convnext_t; do
   echo "== $BB"
   timeout 600 python tools/train.py \
-    configs/Custom/maskrcnn_palm_staged/maskrcnn_${BB}_staged_full.py \
+    configs/Custom/4_satellite_wv3_30cm/maskrcnn_${BB}_staged_full.py \
     --cfg-options train_cfg.max_iters=60 train_cfg.val_interval=100000 \
                   default_hooks.checkpoint.interval=100000 \
     2>&1 | tail -3
@@ -206,8 +218,8 @@ The arm-C dry run is the real test of the prior inventory: the runner resolves
 each Stage C checkpoint by glob and refuses on a missing or ambiguous match,
 so if all four resolve there, arm C cannot fail on a bad path hours later.
 
-Stage C `best_GE` checkpoints, under
-`/workspace/mmdetection/work_dirs/Stage_C/maskrcnn_<bb>_stagec/`:
+Stage C `best_GE` checkpoints, one per backbone in that backbone's Stage C
+work directory:
 
 | Backbone | checkpoint |
 |---|---|
@@ -217,7 +229,7 @@ Stage C `best_GE` checkpoints, under
 | MambaVision-S | `best_GE_segm_mAP_50_iter_95001.pth` |
 
 The Stage C prior is the **GE-selected** checkpoint (satellite-like selection
-target) — state this in Methods.
+target); that selection choice is part of the recorded protocol.
 
 ### Two checks in the first minute of the first run
 
@@ -230,27 +242,25 @@ target) — state this in Methods.
   random initialisation without an error — arm B0 would become "from
   scratch" and the arm-C comparison would be meaningless.
 
-## 8. Evaluation
+## 7. Evaluation
 
 Locked protocol: `PalmBenchmarkMetric`, segm mAP@50, `max_dets 500`, F1 at the
 F1-optimal threshold, on the refined WV-3 test set. Earlier single-stage WV-3
 numbers and all June/July Stage D fine-tunes predate the refined ground truth
 and are **superseded** — not compared, not shown.
 
-## 9. Reporting
+## 8. Reporting
 
 **One table, twelve rows**: 4 backbones × {zero-shot, B0, C}. Columns: segm
-mAP@50, F1, and wall-clock training time (the cost half of the claim).
+mAP@50, F1, and wall-clock training time (the cost half of the claim). Stage
+D is reported compactly, as a feasibility finding rather than a full study,
+with the table carrying the result.
 
-Roughly 400 words of results, one short discussion paragraph on feasibility.
-No Stage D figure — the table carries it, and four figures already compete for
-space.
+Recipe-selection note: the freeze regime and loss variant were selected on a
+preliminary annotation version (June runs) and held fixed for all reported
+arms; never re-tuned.
 
-Recipe-selection note for Methods: the freeze regime and loss variant were
-selected on a preliminary annotation version (June runs) and held fixed for
-all reported arms; never re-tuned.
-
-## 10. Per-backbone accommodations (carried verbatim from Stage C)
+## 9. Per-backbone accommodations (carried verbatim from Stage C)
 
 | Config | Accommodation |
 |---|---|

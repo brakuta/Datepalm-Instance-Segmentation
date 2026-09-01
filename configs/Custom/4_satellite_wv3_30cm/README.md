@@ -8,7 +8,9 @@ where a crown is roughly 17 px across instead of 100? And how much
 annotation does that actually take?
 
 **Read `STAGE_D_README.md` in this folder before running anything here.**
-It is the most involved experiment in the repository.
+It is the most involved experiment in the repository. `STAGE_D_README.md`
+is the historical design memo, kept as written during the work; this README
+describes what the folder ships.
 
 ## Four config families
 
@@ -19,7 +21,9 @@ It is the most involved experiment in the repository.
 | `_staged_full` | the full-budget reference point |
 | `_staged_ms` | **8-band multispectral** WV-3 rather than RGB |
 
-Real WV-3 corpus: 3,636 train / 407 val / 413 test tiles, 63,946 crowns.
+Real WV-3 corpus: 3,636 train / 407 val / 413 test tiles, 63,946 distinct
+reference crowns (counts from the regenerated 4 Aug ground truth; see
+`STAGE_D_README.md`).
 
 ## The budget ladder is nested and seeded
 

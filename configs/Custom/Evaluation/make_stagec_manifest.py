@@ -41,7 +41,7 @@ import json
 import os.path as osp
 import sys
 
-CFG_DIR = '/workspace/mmdetection/configs/Custom/maskrcnn_palm_stagec'
+CFG_DIR = '/workspace/mmdetection/configs/Custom/3_unified_multisource'
 WORK    = '/workspace/mmdetection/work_dirs/Stage_C'
 
 # backbone stem -> (label, family)

@@ -1,23 +1,23 @@
-# Country-Scale Date-Palm Mapping — Manuscript Write-Up Notes
+# Country-Scale Date-Palm Mapping — Write-Up Notes
 
-Reference notes for the operational UAE-wide mapping run: the deployment model,
-the hard-negative adaptation, the inference pipeline, and the limitations that
-must be disclosed. Written to be lifted into the manuscript's Methods and
-Discussion. Every number here is measured, not estimated.
+Historical write-up notes for the operational UAE-wide mapping run, kept as
+the record of the deployment model, the hard-negative adaptation, the
+inference pipeline, and the limitations that must be disclosed alongside any
+use of the map. Every number here is measured, not estimated.
 
 Companion sources in this repo:
 - `configs/Custom/utils/palm_inference_pipeline.py` — the pipeline itself; its
   `CONFIG` block is the authoritative record of the deployed parameters.
 - `configs/Custom/Finetune_HN/` — mining, evaluation and threshold calibration.
-- `configs/Custom/maskrcnn_palm_finetune_hn/maskrcnn_spatialmamba_s_deploy.py`
+- `configs/Custom/5_deployment_finetune/maskrcnn_spatialmamba_s_deploy.py`
   — the deploy config (separate from any evaluated benchmark config).
 
 ---
 
 ## 1. Deployment model, and why it is not a benchmark model
 
-State this first, or a reviewer will assume the mapping used one of the
-benchmark models and ask why the metrics differ.
+This distinction comes first: the mapping did not use one of the benchmark
+models, and the metrics differ accordingly.
 
 The benchmark checkpoints and their reported metrics are untouched. Country-scale
 mapping uses a **separate deployment model**: the Stage C unified multi-source
@@ -33,8 +33,9 @@ evaluated config is what preserves the published numbers.
 ## 2. Hard-negative adaptation (the "fine-tuning approach")
 
 **Problem.** Stage C is trained on annotated farmland. The UAE is mostly desert,
-and at inference the model fired on palm-like shrubs, native *Prosopis* /
-*Ziziphus*, irrigation structures and shadow-edge texture — error modes that no
+and at inference the model fired on palm-like shrubs, native *Prosopis*
+(ghaf, *Prosopis cineraria*) / *Ziziphus*, irrigation structures and
+shadow-edge texture — error modes that no
 validation split containing only labelled farmland can see. Measured on 2,098
 palm-free desert tiles the model had never trained on:
 **4.158 false positives per tile at score 0.35, with 90.9% of tiles carrying at
@@ -120,9 +121,9 @@ with a **neighbour-density attribute** (count of other detected palms within
 isolated desert detections where residual false positives concentrate.
 
 ### (e) Two-workstation partitioning
-The archive was split by **exclusive ownership of folder sets** — WS2 processed
-`01_Common_Candidates` and `02_Only_WS2`, WS1 was restricted to `02_Only_WS1`
-via `--only` — with deterministic `--shard K/N` available as the alternative.
+The workload was split across two workstations by **exclusive ownership of
+disjoint folder sets** (each machine restricted to its own set via `--only`),
+with deterministic `--shard K/N` available as the alternative.
 Because the units are disjoint, the merge step's cross-unit NMS handles the
 boundaries identically whether the two neighbours were computed on the same
 machine or not.
@@ -184,6 +185,13 @@ kept **no background tiles**, and used the stock converter with `iscrowd=0`
 hardcoded. §2.3 must therefore be scoped per dataset, or Stages A–C rebuilt.
 
 Most important items to report (Stage D build):
+
+> **Note on the counts below.** The Stage D corpus counts in items 2–3
+> (37,066 / 63,953 / 149,903 unique-crown and polygon figures; 7,233 / 596
+> iscrowd figures) predate the final ground-truth regeneration of
+> 4 Aug 2026. The regenerated counts are carried by
+> `configs/Custom/4_satellite_wv3_30cm/STAGE_D_README.md` and are the ones
+> to quote.
 
 1. **Spatially disjoint splits by region polygon**; tiles straddling a region
    boundary are discarded (`STRADDLE_TOLERANCE = 0.0`).

@@ -21,7 +21,7 @@ Producer–consumer pipelining runs them in parallel so the GPU never waits:
         GPU  ####  ####  ####  ####  ####  ####
         CPU    ##########  ##########  ##########
 
-On a TITAN RTX with FP16 MambaVision-Small at 1024² and batch 6, the
+On a 24 GB GPU with the FP16 deployed model at 1024² and batch 6, the
 forward pass is ~180 ms. Per-tile vectorisation (mask smoothing + contours
 + polygon emission) is ~30–80 ms depending on palm density. With 4
 vectoriser threads the CPU side finishes well within the GPU budget, so
@@ -620,9 +620,21 @@ def _drop_file_cache(path: Path):
 _FAST_TMP = Path("/data/_palm_inference_tmp")
 
 
+def _is_wsl() -> bool:
+    try:
+        return 'microsoft' in Path('/proc/version').read_text().lower()
+    except OSError:
+        return False
+
+
 def _get_fast_copy(src: Path) -> tuple[Path, bool]:
     """Copy src to native Linux filesystem for fast I/O, if and only if it is
-    on a slow WSL2 bind-mount. Reuses an existing copy if one is present."""
+    on a slow WSL2 bind-mount. Reuses an existing copy if one is present.
+
+    WSL2 only: on a native Linux machine paths under /mnt/ are ordinary
+    mounts, and copying every mosaic into /data would only waste disk."""
+    if not _is_wsl():
+        return src, False
     src_str = str(src)
     slow_prefixes = ('/workspace', '/mnt/', '/run/desktop')
     if not any(src_str.startswith(p) for p in slow_prefixes):

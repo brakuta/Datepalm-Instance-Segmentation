@@ -127,7 +127,7 @@ class CONFIG:
     #
     # CHECKPOINT_FILE may contain a glob; it is resolved at load time and must
     # match exactly one file.
-    CONFIG_FILE     = 'configs/Custom/maskrcnn_palm_finetune_hn/maskrcnn_spatialmamba_s_deploy.py'
+    CONFIG_FILE     = 'configs/Custom/5_deployment_finetune/maskrcnn_spatialmamba_s_deploy.py'
     CHECKPOINT_FILE = ('work_dirs/Finetune_HN/maskrcnn_spatialmamba_s_finetune_hn/'
                        'best_coco_segm_mAP_50_iter_4000.pth')
     DEVICE          = 'cuda:0'

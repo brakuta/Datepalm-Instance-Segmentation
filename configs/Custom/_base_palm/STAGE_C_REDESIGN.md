@@ -1,11 +1,19 @@
 # Stage C Training Pipeline: Diagnosis and Production Redesign
 
+> **Historical record.** This document is the engineering record of the
+> Stage C redesign, written while the work was being done and kept in that
+> form. It is retained because `RESULTS.md` relies on it when interpreting
+> cross-stage comparisons, and because the defect register explains settings
+> that would otherwise look arbitrary. Paths have been updated to the
+> published folder names; the analysis is otherwise as written at the time.
+
 **Scope.** This document analyses the reported Stage C failure modes (severe
 slowdown, host hangs, and system-memory spillover), identifies their root
 cause, and specifies a production-grade redesign of the Stage C training
 configuration. It also records latent configuration defects discovered during
-the audit and documents one design decision that requires ratification because
-it affects published results.
+the audit and documents one design decision that affected published results;
+Section 4 records how it was resolved, and the resolved configuration is what
+shipped.
 
 ---
 
@@ -48,7 +56,8 @@ do not reduce the working set and therefore cannot be the primary remedy.
 
 ### 2.2 A contradiction in the locked precision decision
 
-The FP32 decision is justified in `SESSION_CONTEXT.md` on two grounds: (i) it
+The FP32 decision was justified in the internal working notes (not published)
+on two grounds: (i) it
 avoids an FP16/FP32 dtype mismatch in `batched_nms` for the pure-SSM
 backbones, and (ii) it matches Stage B for cross-stage comparability. The
 second justification is contradicted by the Stage B artifacts themselves. The
@@ -84,7 +93,7 @@ matches found by a naive text search are comment lines only ("reduce
 assignments. The Stage B training condition is therefore unambiguously
 `AmpOptimWrapper` with `dtype='float16'` across the entire cohort, including
 every state-space backbone. This confirms the recommendation: `amp_fp16` is the
-comparability-correct setting, and the `SESSION_CONTEXT.md` assertion that FP32
+comparability-correct setting, and the working notes' assertion that FP32
 matches Stage B is incorrect. The residual uncertainty flagged in the first
 revision is closed; no further confirmation is required.
 
@@ -259,7 +268,8 @@ The following defects were identified and corrected in the revised files.
    `scores_after_nms[mask[keep]] = dets[:, -1]` raised `RuntimeError: Index put
    requires the source and destination dtypes match, got Half for the
    destination and Float for the source`. This is the FP16/FP32 `batched_nms`
-   interaction cited in `SESSION_CONTEXT.md` as the original motivation for the
+   interaction cited in the internal working notes (not published) as the
+   original motivation for the
    FP32 lock; it surfaced once the corrected runtime restored AMP. Notably,
    none of the Stage B per-backbone configs, the schedule, or the runtime
    contained any NMS or autocast guard, yet Stage B trained these same SSM
@@ -271,8 +281,9 @@ The following defects were identified and corrected in the revised files.
    write-back is dtype-consistent. It changes no model config, backbone, or
    detector code, and is a no-op fast-path under `PRECISION='fp32'`. It is
    loaded in both precision modes so the configuration is identical across
-   modes. All 13 backbones are covered: 11 declare it in their (replaced)
-   `custom_imports`; ResNet-50 and Swin-S inherit it from the runtime.
+   modes. All eleven published Stage C configs are covered: nine declare it in
+   their (replaced) `custom_imports`; ResNet-50 and ResNet-101 inherit it from
+   the runtime's `custom_imports`.
 
 ---
 
@@ -296,8 +307,9 @@ The following defects were identified and corrected in the revised files.
 **New — shared:**
 
 - `nms_fp32_guard.py` — AMP-safe `batched_nms` wrapper (defect 7). Loaded via
-  `custom_imports` in the runtime (inherited by ResNet-50 and Swin-S) and
-  re-declared in the other 11 per-backbone configs' `custom_imports`.
+  `custom_imports` in the runtime (inherited by ResNet-50 and ResNet-101) and
+  re-declared in the other nine published per-backbone configs'
+  `custom_imports`.
 
 **Revised — per-backbone:**
 
@@ -306,8 +318,6 @@ The following defects were identified and corrected in the revised files.
 - `maskrcnn_spatialmamba_s_stagec.py` — Stage-C-only accommodation removed.
 - `maskrcnn_pvtv2_b2_stagec.py` — Stage-C-only accommodation removed (Stage B
   ran full proposals).
-- `maskrcnn_efficientvmamba_s_stagec.py` — AMP/AdamW override removed.
-- `maskrcnn_mambaout_t_stagec.py` — AMP/AdamW override removed.
 - `maskrcnn_r101_stagec.py` — lr override removed.
 
 **No change required** (inherit the corrected runtime; model blocks already
@@ -318,10 +328,18 @@ consistent): `maskrcnn_r50_stagec.py`, `maskrcnn_convnext_t_stagec.py`,
 previously unusable because they inherited the invalid `save_last` keyword
 (defect 1); the runtime fix restores them without per-file edits.
 
-`maskrcnn_efficientvmamba_s_stagec.py` and `maskrcnn_mambaout_t_stagec.py`
-appear to be variants outside the reported 10-model matrix (which uses
-EfficientMamba-B and MambaOut-S); they are corrected for hygiene, but confirm
-their inclusion status before reporting.
+At the time of the audit the working tree also contained two variant configs
+outside the reported matrix (which uses EfficientVMamba-B and MambaOut-S);
+their AMP/AdamW overrides were removed for hygiene (defect 3), but the
+variants themselves were not carried into the published set. The published
+folder `3_unified_multisource/` ships exactly eleven Stage C configs, one per
+benchmark backbone:
+
+```
+maskrcnn_{r50,r101,convnext_t,swin_s,pvtv2_b2}_stagec.py
+maskrcnn_{vmamba_s,spatialmamba_s,groupmamba_s,
+          efficientvmamba_b,mambavision_s,mambaout_s}_stagec.py
+```
 
 ---
 
@@ -333,7 +351,7 @@ their inclusion status before reporting.
 export OMP_NUM_THREADS=1 MKL_NUM_THREADS=1
 PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True \
   python tools/train.py \
-  configs/Custom/maskrcnn_palm_stagec/maskrcnn_<backbone>_stagec.py
+  configs/Custom/3_unified_multisource/maskrcnn_<backbone>_stagec.py
 ```
 
 `expandable_segments:True` reduces allocator fragmentation and is a defensive
@@ -341,14 +359,17 @@ complement to the working-set reduction, not a substitute for it. The
 `OMP_NUM_THREADS` / `MKL_NUM_THREADS` exports clamp BLAS thread pools to one
 per process; together with `env_cfg.mp_cfg.opencv_num_threads=1` in the runtime
 they replace the per-worker thread clamp that the (unusable) custom
-`worker_init_fn` was intended to provide — see defect 6 below.
+`worker_init_fn` was intended to provide — see defect 6 in the register above.
 
-**Defense-in-depth (WSL2 host).** To convert any residual overflow into a
-fast, explicit out-of-memory error rather than a silent host-freezing spill,
-set the NVIDIA Control Panel option *Manage 3D Settings → CUDA — Sysmem
-Fallback Policy → Prefer No Sysmem Fallback*. With the working set inside
-24 GB this path is never exercised, but the setting guarantees that a
-mis-sized future configuration fails fast instead of hanging the host.
+**Defence in depth (historical aside — original workstation only).** The
+training hosts were Windows/WSL2 workstations, where the NVIDIA driver spills
+device allocations into shared system memory instead of raising an
+out-of-memory error. On that environment, the NVIDIA Control Panel option
+*Manage 3D Settings → CUDA — Sysmem Fallback Policy → Prefer No Sysmem
+Fallback* converts any residual overflow into a fast, explicit out-of-memory
+error rather than a silent host-freezing spill. With the working set inside
+24 GB this path is never exercised, and the setting is irrelevant on native
+Linux hosts; it is recorded here as part of the original environment.
 
 **Verification checklist.**
 

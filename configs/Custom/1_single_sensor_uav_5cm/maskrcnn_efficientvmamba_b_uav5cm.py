@@ -1,5 +1,5 @@
 # ==========================================================================
-# maskrcnn_palm/maskrcnn_efficientvmamba_b_uav5cm.py
+# 1_single_sensor_uav_5cm/maskrcnn_efficientvmamba_b_uav5cm.py
 # --------------------------------------------------------------------------
 # Mask R-CNN + EfficientVMamba-Base on UAV 5 cm.
 #

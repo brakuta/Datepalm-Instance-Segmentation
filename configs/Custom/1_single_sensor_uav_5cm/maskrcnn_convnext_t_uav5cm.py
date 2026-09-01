@@ -1,5 +1,5 @@
 # ==========================================================================
-# maskrcnn_palm/maskrcnn_convnext_t_uav5cm.py
+# 1_single_sensor_uav_5cm/maskrcnn_convnext_t_uav5cm.py
 # --------------------------------------------------------------------------
 # Mask R-CNN + ConvNeXt-T on UAV 5 cm.
 #

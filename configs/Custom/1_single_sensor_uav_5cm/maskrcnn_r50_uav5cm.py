@@ -1,5 +1,5 @@
 # ==========================================================================
-# maskrcnn_palm/maskrcnn_r50_uav5cm.py
+# 1_single_sensor_uav_5cm/maskrcnn_r50_uav5cm.py
 # --------------------------------------------------------------------------
 # Mask R-CNN + ResNet-50 on UAV 5 cm — bottleneck ablation baseline.
 #

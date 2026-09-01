@@ -120,8 +120,8 @@
 #       --out results/qual/crown
 #
 #   # 4. is D80 robust to the checkpoint protocol? (after regenerating the
-#   #    UAV pkls: bash configs/Custom/Evaluation/make_stagec_pkls.sh
-#   #             --protocol unified)
+#   #    UAV pkls under the unified protocol -- see
+#   #    configs/Custom/Evaluation/README.md)
 #   python configs/Custom/utils/crown_diameter_analysis.py extract \
 #       --protocol unified --out results/qual/crown_unified \
 #       --pkl-pattern 'results/qual/{key}_stageC-unified_{set}.pkl'

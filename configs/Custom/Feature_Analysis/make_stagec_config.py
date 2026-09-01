@@ -39,11 +39,11 @@ best:<TAG>  Always the ``best_<TAG>_segm_mAP_50_iter_*.pth`` file
 last        Always the ``last_checkpoint`` pointer target.
 iter:<N>    Always ``iter_<N>.pth``; errors if absent.
 
-Usage (from the mmdetection root)
+Usage (from the repository root)
 ---------------------------------
     python configs/Custom/Feature_Analysis/make_stagec_config.py \
         --work-root  /root/work_dirs/Stage_C \
-        --config-root configs/Custom/maskrcnn_palm_stagec \
+        --config-root configs/Custom/3_unified_multisource \
         --base configs/Custom/Feature_Analysis/config_feature_analysis.json \
         --out  configs/Custom/Feature_Analysis/config_feature_analysis.json \
         --policy auto
@@ -240,7 +240,7 @@ def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--work-root", default="/root/work_dirs/Stage_C")
     ap.add_argument("--config-root",
-                    default="configs/Custom/maskrcnn_palm_stagec")
+                    default="configs/Custom/3_unified_multisource")
     ap.add_argument("--base", required=True,
                     help="Existing config JSON; all non-model fields are kept.")
     ap.add_argument("--out", required=True,

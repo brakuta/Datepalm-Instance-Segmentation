@@ -1,5 +1,5 @@
 # ==========================================================================
-# maskrcnn_palm/maskrcnn_spatialmamba_s_uav5cm.py
+# 1_single_sensor_uav_5cm/maskrcnn_spatialmamba_s_uav5cm.py
 # --------------------------------------------------------------------------
 # Mask R-CNN + Spatial-Mamba-Small on UAV 5 cm.
 #

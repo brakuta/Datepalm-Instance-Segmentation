@@ -1,5 +1,5 @@
 # ==========================================================================
-# maskrcnn_spatialmamba_s_deploy.py
+# maskrcnn_spatialmamba_s_deploy_captest.py
 # --------------------------------------------------------------------------
 # The DEPLOYMENT config for the country-scale inventory. Architecture is
 # identical to Stage C Spatial-Mamba-S; only the inference-time detection cap
