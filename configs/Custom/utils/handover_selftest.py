@@ -203,8 +203,6 @@ def check_extensions():
         'selective_scan_cuda_core': ('required', 'GroupMamba kernel.'),
         'selective_scan_cuda_oflex_rh': ('required', 'Spatial-Mamba kernel.'),
         'dwconv2d': ('required', 'Spatial-Mamba depthwise convolution.'),
-        'selective_scan_cuda_ndstate': (
-            'optional', 'Alternative VMamba-family kernel.'),
         'selective_scan_cuda': ('optional', 'Alternative fast Mamba kernel.'),
         'mamba_ssm': ('required', 'MambaVision kernel and support library.'),
         'causal_conv1d': ('required', 'Mamba support library.'),

@@ -39,7 +39,7 @@ repository contain no architecture code.
 - commit `2ed52ead062a51a64521ed3871d52914bf532876`
 - MIT, Copyright (c) 2024 MzeroMiko
 - Build-time edit to `kernels/selective_scan/setup.py`: no GPU query,
-  torch's own architecture flags, and the `core`, `ndstate` and `oflex`
+  torch's own architecture flags, and the `core` and `oflex`
   variants. Applied and explained in `docker/Dockerfile.reconstructed`.
 
 ### Spatial-Mamba (`/opt/spatial_mamba`)

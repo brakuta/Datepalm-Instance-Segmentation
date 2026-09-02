@@ -29,7 +29,7 @@ README:
   code and expect the upstream projects at fixed paths.
 - `selective_scan_cuda_core is not defined` when GroupMamba runs. The
   VMamba kernel was built with only its default `oflex` variant. Build the
-  `core`, `ndstate` and `oflex` variants, as the Dockerfile does.
+  `core` and `oflex` variants, as the Dockerfile does.
 - `rasterio is not installed`, or another geospatial package. Those come
   from `requirements.txt`; the Dockerfile installs them explicitly.
 

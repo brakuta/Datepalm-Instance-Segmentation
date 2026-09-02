@@ -264,7 +264,7 @@ the reason in a comment beside it:
 | file | edit | why |
 |---|---|---|
 | `/opt/vmamba/kernels/selective_scan/setup.py` | disable the compute-capability query and drop the `-arch=sm_XX` flag | the query needs a GPU, and the flag makes torch ignore `TORCH_CUDA_ARCH_LIST` |
-| same file | `MODES = ["core", "ndstate", "oflex"]` instead of `["oflex"]` | GroupMamba calls the `core` variant directly |
+| same file | `MODES = ["core", "oflex"]` instead of `["oflex"]` | GroupMamba calls the `core` variant directly |
 | `/opt/spatial_mamba/kernels/dwconv2d/depthwise_fwd/launch.cu` | add `#include <ATen/core/grad_mode.h>` after the ATen include | `at::NoGradGuard` is no longer reachable through `ATen/ATen.h` in torch 2.1 |
 
 Two notes on this sequence. mmcv must be able to see torch while it is

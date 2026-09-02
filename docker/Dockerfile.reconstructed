@@ -154,9 +154,11 @@ RUN git clone https://github.com/YuHengsss/MSVMamba.git /opt/msvmamba \
     && git -C /opt/msvmamba checkout c39401918e94f11eb29e4932b901b3fd139f1377
 
 # ---- COMPILED KERNELS -------------------------------------------------------
-# The working environment imports selective_scan_cuda, selective_scan_cuda_core,
+# The working environment imported selective_scan_cuda, selective_scan_cuda_core,
 # selective_scan_cuda_oflex, selective_scan_cuda_ndstate and dwconv2d. Nothing
 # above builds them; they were compiled by hand after the image was built.
+# (ndstate is not rebuilt: its sources are absent at the pinned VMamba
+# commit and no backbone wrapper calls it.)
 #
 # The setup.py locations are MEASURED on the machine (2026-08-31):
 #     /opt/vmamba/kernels/selective_scan/setup.py
@@ -188,10 +190,10 @@ ENV TORCH_CUDA_ARCH_LIST="7.5;8.0;8.6;8.9;9.0+PTX"
 # (from the variable above) apply.
 #
 # A third edit widens what gets built. Upstream builds only the `oflex`
-# variant; GroupMamba's csms6s.py calls selective_scan_cuda_core, and the
-# original environment carried core, ndstate and oflex. The upstream file
-# lists that combination as a commented alternative, so it is selected
-# here. Each variant takes a few minutes to compile.
+# variant, and GroupMamba's csms6s.py calls selective_scan_cuda_core, so
+# `core` is added. The original environment also carried an `ndstate`
+# variant, but its sources are absent at the pinned commit and nothing
+# here calls it. Each variant takes a few minutes to compile.
 #
 # The build fails loudly if the upstream file has changed and an edit no
 # longer lands.
@@ -199,11 +201,11 @@ RUN cd /opt/vmamba/kernels/selective_scan \
     && sed -i \
         -e 's/^    if get_compute_capability() < 80:$/    if False:  # patched: no GPU at build time/' \
         -e '/^    cc_flag.append(f"-arch=sm_{get_compute_capability()}")$/d' \
-        -e 's/^MODES = \["oflex"\]$/MODES = ["core", "ndstate", "oflex"]/' \
+        -e 's/^MODES = \["oflex"\]$/MODES = ["core", "oflex"]/' \
         setup.py \
     && if sed -n '/^def get_ext/,$p' setup.py | grep -q 'get_compute_capability()'; then \
            echo 'setup.py patch did not apply; upstream file changed' >&2; exit 1; fi \
-    && grep -q '^MODES = \["core", "ndstate", "oflex"\]$' setup.py \
+    && grep -q '^MODES = \["core", "oflex"\]$' setup.py \
     && pip install --no-build-isolation .
 
 # dwconv2d uses at::NoGradGuard but includes only <ATen/ATen.h>, which
