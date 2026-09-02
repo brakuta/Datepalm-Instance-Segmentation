@@ -40,7 +40,7 @@
 #    cudnn_benchmark=False costs ~5-10% throughput.
 #
 # Architecture (verbatim): type='mamba_small_vision_timm', drop_path_rate=0.2,
-# frozen_stages=0, local_files_only=True; FPN in_channels=[96,192,384,768].
+# frozen_stages=0, local_files_only=False; FPN in_channels=[96,192,384,768].
 # ==========================================================================
 
 _base_ = [
@@ -107,7 +107,7 @@ model = dict(
         drop_path_rate=0.2,
         frozen_stages=0,
         gradient_checkpointing=False,
-        local_files_only=True,
+        local_files_only=False,
     ),
     neck=dict(
         _delete_=True,

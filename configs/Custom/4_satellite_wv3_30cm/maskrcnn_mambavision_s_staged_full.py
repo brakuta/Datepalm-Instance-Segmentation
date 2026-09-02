@@ -60,7 +60,7 @@ model = dict(
         drop_path_rate=0.2,
         frozen_stages=-1,         # arm B0: nothing frozen
         gradient_checkpointing=False,
-        local_files_only=True,
+        local_files_only=False,
     ),
     neck=dict(
         _delete_=True,
