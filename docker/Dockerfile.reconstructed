@@ -23,14 +23,16 @@
 #
 # WHAT TO EXPECT
 #   This file is the supported way to rebuild the environment (the image the
-#   work ran on is not distributed). A two-hour build has many ways to fail,
-#   and the pinned dependencies below may be withdrawn upstream; the
-#   self-test named below is the acceptance criterion, not the build
-#   finishing.
+#   work ran on is not distributed). Last verified 2026-09-02: a clean build
+#   on Docker Desktop for Windows finished in about 45 minutes with no GPU
+#   visible to the build. The pinned dependencies below may still be
+#   withdrawn upstream; the self-tests named below are the acceptance
+#   criterion, not the build finishing.
 #
 #   BUILD:  docker build -f Dockerfile.reconstructed -t mamba-mmdet:rebuilt .
-#           (expect 1-2 hours; the kernel builds dominate)
+#           (the three kernel builds and the image export dominate)
 #   VERIFY: python configs/Custom/utils/handover_selftest.py   # 0 failure(s)
+#           python configs/Custom/utils/smoke_build_models.py  # on the GPU
 # =============================================================================
 
 # Measured from the layer history: CUDA 12.1.0, cuDNN 8.9.0.131, Ubuntu 22.04,
