@@ -642,7 +642,12 @@ def _get_fast_copy(src: Path) -> tuple[Path, bool]:
 
     try:
         _FAST_TMP.mkdir(parents=True, exist_ok=True)
-        dst = _FAST_TMP / src.name
+        # Same-named mosaics in different input directories must not
+        # collide (the size-match reuse below would then process the
+        # wrong file), so the parent path is folded into the copy's name.
+        import hashlib
+        tag = hashlib.sha1(str(src.parent).encode()).hexdigest()[:8]
+        dst = _FAST_TMP / f'{src.stem}_{tag}{src.suffix}'
         # Reuse existing copy if it matches source size (crash-safe restart).
         if dst.exists():
             try:

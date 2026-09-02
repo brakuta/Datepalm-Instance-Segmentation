@@ -40,4 +40,5 @@ jobs:
 
       - name: Metadata files parse
         run: |
-          python -c "import yaml,sys; yaml.safe_load(open('weights.yaml')); print('weights.yaml OK')" || pip install pyyaml && python -c "import yaml; yaml.safe_load(open('weights.yaml')); yaml.safe_load(open('CITATION.cff')); print('weights.yaml + CITATION.cff OK')"
+          pip install --quiet pyyaml
+          python -c "import yaml; yaml.safe_load(open('weights.yaml')); yaml.safe_load(open('CITATION.cff')); print('weights.yaml + CITATION.cff OK')"

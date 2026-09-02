@@ -26,5 +26,5 @@ sit beside these scripts and cover the method in detail:
    COCO mAP is close to blind to false-positive suppression, because a
    tile with no ground truth contributes no true positives. A model
    that reports fewer false positives while finding fewer palms has not
-   improved; it has moved the failure to a place the metric does not
-   show.
+   improved; the error has shifted to a quantity the metric does not
+   report.

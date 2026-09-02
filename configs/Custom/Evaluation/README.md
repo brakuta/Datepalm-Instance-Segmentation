@@ -8,7 +8,7 @@ computational-efficiency profile per model.
 
 Folder location: `configs/Custom/Evaluation/`
 
-> **What you need before running anything here.** These scripts operate
+> Before running anything here: these scripts operate
 > on trained checkpoints and prepared COCO-format test sets, neither of
 > which is distributed with this repository (see `WITHHELD.md` and
 > `weights.yaml` at the repository root). Dataset paths default to
@@ -72,7 +72,7 @@ python configs/Custom/Evaluation/compile_cross_transfer.py --manifest cross_tran
 
 ## 2. Files
 
-Nineteen Python files. Three are supporting modules that are imported,
+Eighteen Python files. Three are supporting modules that are imported,
 not run; four are the main entry points; the rest are manifest builders,
 secondary compilers, and checks that supported specific experiments.
 
@@ -154,7 +154,8 @@ a code change. These scripts write or amend manifests:
 - `evaluate_validation.py`: evaluates trained experiment 1/2/3
   checkpoints on their *validation* splits under the same metric and
   protocol as the test evaluation, because model selection happened on
-  validation and reviewers ask for that number. Takes
+  validation and that number is usually reported alongside the test
+  score. Takes
   `--stage A=work_dirs/Stage_A B=work_dirs/Stage_B C=work_dirs/Stage_C`
   and is resumable.
 - `compile_validation.py`: assembles the validation CSVs into a
@@ -288,8 +289,8 @@ checkpoint inside `<work-root>/<config_stem>/`. Resolution order:
 
 This handles every experiment with no code change:
 
-- Single-checkpoint runs (experiments 1, 2, 4): one
-  `best_coco_segm_mAP_50_*` checkpoint; selected directly.
+- Single-checkpoint runs (experiments 1, 2, 4): one `best_*` checkpoint,
+  named after the monitored metric key; selected directly.
 - Unified multi-source runs (experiment 3): two per-sensor
   checkpoints, `best_UAV_*` and `best_GE_*`; the highest-iteration one
   is chosen and a warning lists both. Pass `--ckpt-pattern "best_GE_*"`

@@ -3,7 +3,7 @@
 # --------------------------------------------------------------------------
 # Mask R-CNN + MambaVision-S on the pooled MS-15 cm corpus
 # (GE 15 cm + Aerial 15 cm training, GE-only validation;
-# Aerial held out for post-hoc evaluation via eval_aerial_ms15.py).
+# Aerial held out for post-hoc evaluation via Evaluation/evaluate_model.py).
 # SensorBalancedSampler at alpha=0.3.
 #
 # -----------------------------------------------------------------------

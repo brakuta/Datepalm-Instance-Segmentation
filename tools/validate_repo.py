@@ -32,17 +32,50 @@ WHY THIS EXISTS
     no_artefacts        Checkpoints, imagery and __pycache__ do not belong
                         in a code repository and are easy to add by accident.
 
+  Only files that belong to the repository are checked: tracked files plus
+  untracked files that .gitignore does not exclude. The checkpoints/,
+  datasets/ and work_dirs/ trees a user is told to create are ignored and
+  never fail the checks.
+
   It needs no torch, no GPU and no network, so it runs on a free CI runner
   in seconds.
 """
 
 from __future__ import annotations
 
+import fnmatch
 import re
+import subprocess
 import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
+
+
+def repo_files() -> list[Path]:
+    """Tracked files plus untracked-but-not-ignored ones. Falls back to a
+    filesystem walk when git is unavailable."""
+    try:
+        out = subprocess.run(
+            ['git', 'ls-files', '-z', '--cached', '--others',
+             '--exclude-standard'],
+            cwd=ROOT, capture_output=True, check=True).stdout
+        files = [ROOT / p.decode('utf-8', 'replace')
+                 for p in out.split(b'\0') if p]
+        return [f for f in files if f.is_file()]
+    except (OSError, subprocess.CalledProcessError):
+        return [f for f in ROOT.rglob('*')
+                if f.is_file() and '.git' not in f.parts]
+
+
+FILES = repo_files()
+
+
+def read(f: Path) -> str:
+    return f.read_text(encoding='utf-8', errors='replace')
+
+
+QUOTED = re.compile(r'''['"]([^'"]+)['"]''')
 
 # Absolute paths and identifiers that must never appear. A drive letter is
 # matched only when followed by a separator and a path-like character, so
@@ -51,47 +84,19 @@ PRIVATE = [
     ('windows absolute path',
      re.compile(r'(?<![A-Za-z0-9])[A-Za-z]:[\\/]{1,2}[A-Za-z0-9_$][A-Za-z0-9_\\/. -]{2,}')),
     ('unix home path', re.compile(r'/home/[a-z0-9_-]+/')),
-    ('windows user path', re.compile(r'[Uu]sers[\\/][A-Za-z0-9_.-]+')),
+    ('windows user path',
+     re.compile(r'(?:^|[\\/:\s])[Uu]sers[\\/][A-Za-z0-9_.-]+')),
 ]
-# Lines that legitimately look path-shaped.
-ALLOW = re.compile(r'https?://|/path/to/|<[a-z_ -]+>|noqa:\s*leakscan', re.I)
+# Spans that legitimately look path-shaped are removed before matching, so
+# a URL earlier on the line cannot hide a private path after it.
+ALLOW_SPAN = re.compile(r'https?://\S+|/path/to/\S*|<[a-z_ -]+>', re.I)
+ALLOW_LINE = re.compile(r'noqa:\s*leakscan', re.I)
 
 ARTEFACTS = ('*.pth', '*.ckpt', '*.pkl', '*.npy', '*.tif', '*.tiff',
              '*.gpkg', '*.shp', '*.dbf', '*.shx', '*.prj', '*.cpg',
              '*.parquet', '*.png', '*.jpg', '*.jpeg', '*.pyc')
 
 TEXT = ('.py', '.md', '.txt', '.yaml', '.yml', '.json', '.sh', '.cff')
-
-
-def config_inheritance():
-    """Every _base_ reference resolves to a file that exists."""
-    bad, n = [], 0
-    for cfg in (ROOT / 'configs').rglob('*.py'):
-        m = re.search(r'_base_\s*=\s*\[(.*?)\]', cfg.read_text(errors='replace'), re.S)
-        if not m:
-            continue
-        for rel in re.findall(r"'([^']+\.py)'", m.group(1)):
-            n += 1
-            if not (cfg.parent / rel).resolve().exists():
-                bad.append(f'{cfg.relative_to(ROOT)} -> {rel}')
-    return f'{n} _base_ references', bad
-
-
-def doc_links():
-    """Every relative link in a markdown file points at something real."""
-    bad, n = [], 0
-    for md in ROOT.rglob('*.md'):
-        if '.git' in md.parts:
-            continue
-        for text, link in re.findall(r'\[([^\]]+)\]\(([^)#]+)\)',
-                                     md.read_text(errors='replace')):
-            if link.startswith(('http', 'mailto:', '#')):
-                continue
-            n += 1
-            if not (md.parent / link).resolve().exists():
-                bad.append(f'{md.relative_to(ROOT)}: [{text}] -> {link}')
-    return f'{n} relative links', bad
-
 
 # Path-like tokens in prose, commands and docstrings. Everything doc_links
 # cannot see: fenced code blocks, shell scripts, Python strings. A token is
@@ -111,17 +116,51 @@ GENERATED = {
 }
 
 
+def configs() -> list[Path]:
+    return [f for f in FILES if f.suffix == '.py' and 'configs' in f.parts]
+
+
+def config_inheritance():
+    """Every _base_ reference resolves to a file that exists."""
+    bad, n = [], 0
+    for cfg in configs():
+        m = re.search(r'''_base_\s*=\s*(\[.*?\]|['"][^'"]+['"])''',
+                      read(cfg), re.S)
+        if not m:
+            continue
+        for rel in QUOTED.findall(m.group(1)):
+            if not rel.endswith('.py'):
+                continue
+            n += 1
+            if not (cfg.parent / rel).resolve().exists():
+                bad.append(f'{cfg.relative_to(ROOT)} -> {rel}')
+    return f'{n} _base_ references', bad
+
+
+def doc_links():
+    """Every relative link in a markdown file points at something real."""
+    bad, n = [], 0
+    for md in FILES:
+        if md.suffix != '.md':
+            continue
+        for text, link in re.findall(r'\[([^\]]+)\]\(([^)#]+)\)', read(md)):
+            if link.startswith(('http', 'mailto:', '#')):
+                continue
+            n += 1
+            if not (md.parent / link).resolve().exists():
+                bad.append(f'{md.relative_to(ROOT)}: [{text}] -> {link}')
+    return f'{n} relative links', bad
+
+
 def doc_paths():
     """Every repo-path-like token in docs, scripts and docstrings exists."""
     bad, n = [], 0
-    for f in ROOT.rglob('*'):
-        if '.git' in f.parts or not f.is_file() or f.suffix not in DOC_PATH_EXT:
+    for f in FILES:
+        if f.suffix not in DOC_PATH_EXT or f.name == 'validate_repo.py':
             continue
-        if f.name == 'validate_repo.py':
-            continue
-        for i, line in enumerate(f.read_text(errors='replace').splitlines(), 1):
+        for i, line in enumerate(read(f).splitlines(), 1):
             for token in PATHLIKE.findall(line):
-                token = token.rstrip('.,;:')
+                token = token.rstrip('.,;:>}')
                 if token in GENERATED:
                     continue
                 m = PLACEHOLDER.search(token)
@@ -141,12 +180,13 @@ def doc_paths():
 def custom_imports():
     """Every custom_imports module a config declares is a published file."""
     bad, n = [], 0
-    for cfg in (ROOT / 'configs').rglob('*.py'):
-        m = re.search(r'custom_imports\s*=\s*dict\s*\(\s*imports\s*=\s*\[(.*?)\]',
-                      cfg.read_text(errors='replace'), re.S)
+    for cfg in configs():
+        m = re.search(r'custom_imports\s*=\s*dict\s*\((.*?)\)\s*$', read(cfg),
+                      re.S | re.M)
+        m = m and re.search(r'imports\s*=\s*\[(.*?)\]', m.group(1), re.S)
         if not m:
             continue
-        for mod in re.findall(r"'([^']+)'", m.group(1)):
+        for mod in QUOTED.findall(m.group(1)):
             # configs.* and the *_backbone wrappers must be published here;
             # anything else under mmdet.* ships with the installed package.
             if not (mod.startswith(('configs.', 'palm_inference.'))
@@ -161,15 +201,16 @@ def custom_imports():
 
 def no_private_paths():
     bad, n = [], 0
-    for f in ROOT.rglob('*'):
-        if '.git' in f.parts or not f.is_file() or f.suffix not in TEXT:
+    for f in FILES:
+        if f.suffix not in TEXT:
             continue
         n += 1
-        for i, line in enumerate(f.read_text(errors='replace').splitlines(), 1):
-            if ALLOW.search(line):
+        for i, line in enumerate(read(f).splitlines(), 1):
+            if ALLOW_LINE.search(line):
                 continue
+            probe = ALLOW_SPAN.sub('', line)
             for kind, rx in PRIVATE:
-                if rx.search(line):
+                if rx.search(probe):
                     bad.append(f'{f.relative_to(ROOT)}:{i} [{kind}] '
                                f'{line.strip()[:90]}')
                     break
@@ -178,13 +219,10 @@ def no_private_paths():
 
 def no_artefacts():
     bad = []
-    for pat in ARTEFACTS:
-        for f in ROOT.rglob(pat):
-            if '.git' not in f.parts:
-                bad.append(str(f.relative_to(ROOT)))
-    for d in ROOT.rglob('__pycache__'):
-        if '.git' not in d.parts:
-            bad.append(str(d.relative_to(ROOT)) + '/')
+    for f in FILES:
+        if any(fnmatch.fnmatch(f.name, pat) for pat in ARTEFACTS) \
+                or '__pycache__' in f.parts:
+            bad.append(str(f.relative_to(ROOT)))
     return 'checkpoints, imagery, caches', bad
 
 
@@ -199,7 +237,7 @@ CHECKS = [
 
 
 def main():
-    print(f'validating {ROOT}\n')
+    print(f'validating {ROOT}  ({len(FILES)} files)\n')
     failed = 0
     for name, fn in CHECKS:
         scope, bad = fn()

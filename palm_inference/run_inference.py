@@ -75,13 +75,15 @@ def main():
                         help="MMDetection .pth checkpoint")
     parser.add_argument("--device", default="cuda:0")
 
-    # Inference knobs
-    parser.add_argument("--tile-size", type=int, default=512)
-    parser.add_argument("--overlap", type=int, default=128,
+    # Inference knobs. Defaults are the deployment settings, taken from
+    # InferenceConfig so the two cannot drift apart.
+    _d = InferenceConfig()
+    parser.add_argument("--tile-size", type=int, default=_d.tile_size)
+    parser.add_argument("--overlap", type=int, default=_d.overlap,
                         help="Pixel overlap between adjacent tiles. >= max "
                              "expected palm crown diameter in pixels.")
-    parser.add_argument("--batch-size", type=int, default=6)
-    parser.add_argument("--score-thr", type=float, default=0.35)
+    parser.add_argument("--batch-size", type=int, default=_d.batch_size)
+    parser.add_argument("--score-thr", type=float, default=_d.score_threshold)
     parser.add_argument("--no-fp16", action="store_true",
                         help="Disable FP16 autocast (slower but exact).")
     parser.add_argument("--num-workers", type=int, default=4)

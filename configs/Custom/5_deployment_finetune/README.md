@@ -10,9 +10,8 @@ shrubs, ghaf, acacia) and scores it as palms. The benchmark does not
 measure this failure mode, because the benchmark's test tiles contain
 palms.
 
-**This is an operational adaptation, not part of the benchmark.** The
-unified checkpoints and their reported numbers are untouched. Describe it
-as a post-processing step, not as a competing model.
+This is an operational adaptation, not part of the benchmark: the
+unified checkpoints and their reported numbers are untouched.
 
 ## How it works
 
@@ -29,7 +28,7 @@ Fine-tuning on negatives alone erodes recall, because the model is only
 ever taught to suppress detections. The original positive training data
 is therefore replayed alongside the negatives.
 
-**If you build a variant of this, keep the replay.** Removing it
+**Keep the replay in any variant of this recipe.** Removing it
 produces a model that reports far fewer false positives while also
 finding fewer palms, and the recall loss raises no error; it shows up
 only if measured.
@@ -53,9 +52,16 @@ problem.
 Two steps are required after every fine-tuning run:
 
 ```bash
-python configs/Custom/Finetune_HN/calibrate_threshold.py   # re-derive the threshold
-python configs/Custom/Finetune_HN/eval_hard_negatives.py   # measure BOTH axes
+# re-derive the operating threshold on the validation split
+python configs/Custom/Finetune_HN/calibrate_threshold.py \
+    --config <config> --checkpoint <ckpt> --ann <val.json> --images <val_dir> --out <dir>
+
+# measure false-positive suppression and recall together
+python configs/Custom/Finetune_HN/eval_hard_negatives.py \
+    --config <config> --checkpoint <label>=<ckpt> --images <tiles_dir> --out <dir>
 ```
+
+Both scripts document their remaining options in their headers.
 
 1. Recalibrate the threshold: a fine-tuned model does not inherit the
    old operating point.
@@ -63,13 +69,14 @@ python configs/Custom/Finetune_HN/eval_hard_negatives.py   # measure BOTH axes
    close to blind to it, because a tile with no ground truth contributes
    no true positives.
 
-Check both axes. A run that suppresses false positives at the cost of
-recall has not improved the model.
+Check both axes: a run that suppresses false positives at the cost of
+recall has traded one error for another rather than removing one.
 
 ## Running the deployed model
 
 See the repository README, section "Inference with the deployed model".
-Note that the inference CLI defaults are not the deployment settings.
+The CLI defaults are the deployment settings (tile 1024, overlap 256,
+threshold 0.30).
 
 Four operational notes:
 

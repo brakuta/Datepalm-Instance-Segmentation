@@ -13,7 +13,7 @@ Open an issue with:
 3. Output of `python configs/Custom/utils/handover_selftest.py`
 4. Output of `nvidia-smi`
 
-Those four identify almost any problem here without further exchange.
+With those four, most problems can be diagnosed from the report alone.
 
 ## Before opening an issue about installation
 
@@ -38,9 +38,10 @@ python configs/Custom/utils/smoke_build_models.py  # do the models run?
 ## Pull requests
 
 CI runs `python tools/validate_repo.py`, which checks that every config's
-`_base_` chain resolves, that documentation links are not broken, and that
-no absolute paths or private identifiers have crept in. It needs only the
-standard library, so run it locally first.
+`_base_` chain resolves, that documentation links and referenced paths
+exist, that `custom_imports` modules are published, that no user home
+paths or usernames have crept in, and that no data artefacts are
+committed. It needs only the standard library, so run it locally first.
 
 Please do not commit checkpoints, imagery or annotations. `.gitignore`
 covers the usual extensions, and CI fails if one appears anyway.

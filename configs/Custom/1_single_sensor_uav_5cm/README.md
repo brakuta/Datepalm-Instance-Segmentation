@@ -13,7 +13,7 @@ a hidden confound.
 
 ```
 maskrcnn_{r50,r101}_uav5cm.py                    CNN baselines
-maskrcnn_{convnext_t}_uav5cm.py                  modern CNN
+maskrcnn_convnext_t_uav5cm.py                    modern CNN
 maskrcnn_{swin_t,swin_s,pvtv2_b2}_uav5cm.py      transformers
 maskrcnn_{vmamba,spatialmamba,groupmamba,
           mambavision}_{t,s}_uav5cm.py                   state-space
@@ -21,10 +21,10 @@ maskrcnn_efficientvmamba_{s,b}_uav5cm.py         state-space (sizes S and B; no 
 maskrcnn_mambaout_{t,s}_uav5cm.py                SSM ABLATION -- see below
 ```
 
-**MambaOut is not a state-space model.** It is the architecture with the
-SSM removed, included as a control. If it performs comparably to the SSM
-models, that is evidence about what the SSM contributes, which is the
-point of including it. Do not count it as a Mamba family member.
+MambaOut is not a state-space model. It is the architecture with the
+SSM removed, included as a control: if it performs comparably to the SSM
+models, that is evidence about what the SSM contributes. It should not be
+counted as a member of the Mamba family when results are grouped.
 
 ## Running one
 

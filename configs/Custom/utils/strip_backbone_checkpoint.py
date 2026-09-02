@@ -65,7 +65,9 @@ def main() -> int:
 
     import torch
 
-    blob = torch.load(args.src, map_location='cpu')
+    # weights_only=False: classification checkpoints carry a `meta` dict
+    # that torch >= 2.6 refuses to unpickle under its new default.
+    blob = torch.load(args.src, map_location='cpu', weights_only=False)
     sd = blob
     for wrapper in ('state_dict', 'model'):
         if isinstance(sd, dict) and wrapper in sd and isinstance(
@@ -81,11 +83,14 @@ def main() -> int:
         nk = k
         if args.strip_prefix and nk.startswith(args.strip_prefix):
             nk = nk[len(args.strip_prefix):]
-        if args.add_prefix:
+        if args.add_prefix and not nk.startswith(args.add_prefix):
             nk = args.add_prefix + nk
         kept[nk] = v
 
     print(f'{len(kept)} keys kept, {len(dropped)} dropped')
+    if not kept:
+        sys.exit('nothing kept: every key was dropped. Check --strip-prefix '
+                 'and the checkpoint layout with --list.')
     if args.list:
         for k in dropped:
             print(f'  drop  {k}')

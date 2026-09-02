@@ -10,8 +10,9 @@ model. The deployed model came from this comparison.
 
 ## Source-local batching
 
-Batches are drawn from one source at a time rather than mixed. The three
-corpora live on different mounts, and interleaving them destroys kernel
+Batches are drawn from one source at a time rather than mixed. In the
+original environment the three corpora lived on different mounts, and
+interleaving them destroys kernel
 page-cache locality: the same epoch takes far longer, and the slowdown
 appears in a profiler only as I/O wait. Source-local batching changes
 throughput, not what the model sees over an epoch.

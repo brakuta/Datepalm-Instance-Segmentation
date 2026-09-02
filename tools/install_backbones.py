@@ -48,9 +48,14 @@ def installed_backbones_dir() -> Path:
         import mmdet
     except ImportError:
         sys.exit('mmdet is not installed. Install the environment first '
-                 '(see README, "Reproducing the environment").')
+                 '(see README, "Installation").')
+    if getattr(mmdet, '__file__', None) is None:
+        # A namespace package: the repository's own mmdet/ directory was
+        # found on sys.path and no real installation exists.
+        sys.exit('`import mmdet` resolved to this repository, not to an '
+                 'installed package. Install mmdet==3.3.0 first.')
     pkg = Path(mmdet.__file__).resolve().parent
-    if REPO_ROOT in pkg.parents or pkg == REPO_ROOT / 'mmdet':
+    if pkg == REPO_ROOT / 'mmdet' or not (pkg / '__init__.py').exists():
         sys.exit('`import mmdet` resolved to this repository, not to an '
                  'installed package. Install mmdet==3.3.0 first.')
     return pkg / 'models' / 'backbones'
@@ -75,7 +80,16 @@ def main() -> int:
         state = 'overwrite' if target.exists() else 'new'
         print(f'  {w.name:<32} -> {target}  [{state}]')
         if not args.dry_run:
-            shutil.copy2(w, target)
+            try:
+                shutil.copy2(w, target)
+            except PermissionError:
+                sys.exit(f'cannot write to {dst}: the mmdet installation is '
+                         'not writable by this user. Use a virtual '
+                         'environment, or re-run with the permissions '
+                         'that installed mmdet.')
+    if not args.dry_run:
+        # Stale bytecode from an earlier copy must not shadow the new files.
+        shutil.rmtree(dst / '__pycache__', ignore_errors=True)
 
     if args.dry_run:
         print('\nDry run -- nothing copied.')

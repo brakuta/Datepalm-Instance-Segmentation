@@ -1,0 +1,17 @@
+# Keep data, weights and run outputs out of the image; they are mounted.
+.git/
+checkpoints/
+datasets/
+data/
+work_dirs/
+results/
+*.pth
+*.ckpt
+*.pkl
+*.tif
+*.tiff
+*.gpkg
+*.parquet
+__pycache__/
+.venv/
+venv/

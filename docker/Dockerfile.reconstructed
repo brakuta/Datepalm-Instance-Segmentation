@@ -21,12 +21,12 @@
 #
 #   This file adds them back, pinned to the commits measured on the machine.
 #
-# THIS IS THE SECOND-BEST ARTEFACT
-#   The exported image (mamba_slim.tar, 17.6 GB) is the first-best: it needs
-#   no build and cannot drift. Use this file when that image will not load --
-#   a new CPU architecture, a Docker version that rejects the format, or a
-#   need to change a version. Expect to debug it; a two-hour build has many
-#   ways to fail, and the pinned dependencies below may be withdrawn upstream.
+# WHAT TO EXPECT
+#   This file is the supported way to rebuild the environment (the image the
+#   work ran on is not distributed). A two-hour build has many ways to fail,
+#   and the pinned dependencies below may be withdrawn upstream; the
+#   self-test named below is the acceptance criterion, not the build
+#   finishing.
 #
 #   BUILD:  docker build -f Dockerfile.reconstructed -t mamba-mmdet:rebuilt .
 #           (expect 1-2 hours; the kernel builds dominate)
@@ -43,7 +43,7 @@ ENV CUDA_HOME=/usr/local/cuda
 RUN apt-get update && apt-get install -y \
         git wget curl vim nano ninja-build \
         build-essential python3 python3-pip python3-dev \
-        libglib2.0-0 libsm6 libxext6 libxrender-dev \
+        libglib2.0-0 libgl1 libsm6 libxext6 libxrender-dev \
     && rm -rf /var/lib/apt/lists/*
 
 RUN ln -s /usr/bin/python3 /usr/bin/python
@@ -56,9 +56,18 @@ RUN python3 -m pip install --upgrade pip setuptools wheel
 RUN pip install torch==2.1.0 torchvision==0.16.0 \
         --index-url https://download.pytorch.org/whl/cu121
 
+# mmcv must see torch while it builds. pip >= 25.3 always builds in an
+# isolated environment where torch is absent, and mmcv's setup.py then
+# SILENTLY skips its CUDA ops: the install succeeds and every detector
+# fails later at `from mmcv.ops import ...`. Prefer OpenMMLab's prebuilt
+# wheel for this torch/CUDA pair; fall back to a source build that can see
+# the installed torch.
+RUN pip install mmcv==2.1.0 \
+        -f https://download.openmmlab.com/mmcv/dist/cu121/torch2.1/index.html \
+    || pip install --no-build-isolation mmcv==2.1.0
+
 RUN pip install \
         mmengine==0.10.1 \
-        mmcv==2.1.0 \
         mmdet==3.3.0 \
         mmsegmentation==1.0.0 \
         mmpretrain==1.2.0
@@ -161,20 +170,37 @@ RUN cd /opt/spatial_mamba/kernels/selective_scan \
 RUN pip install ptflops==0.7.5
 
 # ---- THIS REPOSITORY --------------------------------------------------------
+# The build context is the repository root (`docker build ... .`), so the
+# image carries the checkout you build from, local edits included; see
+# .dockerignore for what is left out.
+#
 # The configs import the backbone wrappers as mmdet.models.backbones.*, which
 # requires the wrapper modules to live INSIDE the installed mmdet package.
 # The original environment ran mmdet from a full source checkout that carried
 # them; the pip install above does not. install_backbones.py copies them in.
-RUN git clone https://github.com/brakuta/Datepalm-Instance-Segmentation.git \
-        /workspace/Datepalm-Instance-Segmentation \
-    && python /workspace/Datepalm-Instance-Segmentation/tools/install_backbones.py
+COPY . /workspace/Datepalm-Instance-Segmentation
+RUN python /workspace/Datepalm-Instance-Segmentation/tools/install_backbones.py
 
-# PYTHONPATH carries only three of the seven trees. That is correct and not an
+# Some configs name their ImageNet weights by the original absolute path
+# /workspace/mmdetection/checkpoints/...; others use the relative
+# checkpoints/. One mount at the repository's checkpoints/ serves both.
+RUN mkdir -p /workspace/mmdetection /workspace/Datepalm-Instance-Segmentation/checkpoints \
+    && ln -s /workspace/Datepalm-Instance-Segmentation/checkpoints \
+             /workspace/mmdetection/checkpoints
+
+# The experiment 3 dataset file names the COCO trees under /root/datasets/,
+# every other dataset file under /workspace/datasets/. One mount serves both.
+RUN mkdir -p /workspace/datasets && ln -s /workspace/datasets /root/datasets
+
+# PYTHONPATH carries only three of the seven /opt trees. That is correct and not an
 # oversight: the wrappers for vmamba, groupmamba and efficientvmamba insert
 # their own paths at import time. Do not "fix" it by adding them -- vmamba and
 # groupmamba both ship a module named csms6s.py, and putting both on
 # PYTHONPATH makes which one wins depend on import order.
-ENV PYTHONPATH=/opt/vim:/opt/spatial_mamba:/opt/vssd:
+# The repository root is on PYTHONPATH because the configs import their
+# shared hooks and samplers as `configs.Custom._base_palm.*`; mmengine adds
+# nothing to sys.path, and tools/train.py puts tools/, not the root, first.
+ENV PYTHONPATH=/workspace/Datepalm-Instance-Segmentation:/opt/vim:/opt/spatial_mamba:/opt/vssd
 
 WORKDIR /workspace/Datepalm-Instance-Segmentation
 CMD ["/bin/bash"]
@@ -182,7 +208,8 @@ CMD ["/bin/bash"]
 # RUNNING THE CONTAINER
 #   docker run --gpus all -it --shm-size=16g \
 #       -v /path/to/datasets:/workspace/datasets \
-#       -v /path/to/checkpoints:/workspace/mmdetection/checkpoints \
+#       -v /path/to/checkpoints:/workspace/Datepalm-Instance-Segmentation/checkpoints \
+#       -v /path/to/work_dirs:/workspace/Datepalm-Instance-Segmentation/work_dirs \
 #       mamba-mmdet:rebuilt
 #   The dataset configs expect COCO trees under /workspace/datasets/COCO/
 #   (see configs/Custom/_base_palm/) -- mount your data there or edit

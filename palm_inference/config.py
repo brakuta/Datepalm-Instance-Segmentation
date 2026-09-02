@@ -42,13 +42,14 @@ class InferenceConfig:
     # ============================================================
     # TILING
     # ============================================================
-    # Tile size in pixels. 512 matches typical detection training resolution.
+    # Tile size in pixels; 1024 is the deployment setting and the training
+    # tile size of the 15 cm corpora.
     tile_size: int = 1024
 
     # Pixel overlap between adjacent tiles. Tiles share `overlap` pixels with
     # each neighbour to avoid splitting palms across tile seams.
     # Rule of thumb: overlap >= max expected object diameter in pixels.
-    # At 0.15m GSD a 12m palm = 80 px, so 128 px is comfortable.
+    # At 0.15 m GSD a 12 m palm is 80 px; 256 px is the deployment setting.
     overlap: int = 256
 
     # Skip tiles where the read returns >this fraction of nodata pixels.
@@ -59,9 +60,12 @@ class InferenceConfig:
     # INFERENCE
     # ============================================================
     device: str = "cuda:0"
-    batch_size: int = 6      # TITAN RTX 24GB safely handles 6 @ 1024x1024 FP16
+    batch_size: int = 6      # a 24 GB card handles 6 @ 1024x1024 FP16
     use_fp16: bool = True    # Tensor-Core acceleration; 1.5-2x speedup
-    score_threshold: float = 0.35
+    # Pipeline threshold applied to what reaches the output; the model
+    # itself always runs at its own internal score_thr. 0.30 is the
+    # deployment setting.
+    score_threshold: float = 0.30
 
     # DataLoader workers. Each opens its own rasterio handle.
     # 4 is optimal for a single large GeoTIFF; higher values cause page-cache

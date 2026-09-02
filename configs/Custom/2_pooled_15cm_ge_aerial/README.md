@@ -2,17 +2,18 @@
 
 *Internal name: Stage B. Dataset: `_base_palm/dataset_MS15_pooled.py`.*
 
-This experiment asks whether, at a coarser resolution than experiment 1,
-training on two 15 cm sources together beats training on one.
+This experiment trains a single model on two pooled 15 cm sources, at a
+coarser resolution than experiment 1, with one source held out of
+validation so that its score is an independent measurement.
 
 ## Validation design
 
 Training pools Google Earth 15 cm and aerial 15 cm. Validation uses
-Google Earth only; aerial is held out and scored afterwards through a
-separate evaluation-only config run against the best GE-validation
-checkpoint.
+Google Earth only; aerial is held out and scored afterwards with
+`configs/Custom/Evaluation/evaluate_model.py --sensors Aerial` against
+the best GE-validation checkpoint.
 
-The asymmetry is deliberate. If aerial were in the validation set, the
+The asymmetry is intentional. If aerial were in the validation set, the
 checkpoint would be chosen partly by its aerial performance, and the
 question of whether pooling helps on aerial would be answered by data
 that had already influenced checkpoint selection. Holding aerial out

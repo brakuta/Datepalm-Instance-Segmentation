@@ -36,7 +36,7 @@
   <path d="M 408 127 l -7 -4 v 8 z" fill="#777777"/>
 
   <!-- column 3: detector and backbones -->
-  <text x="514" y="34" text-anchor="middle" font-size="13" font-weight="bold" fill="#444444">Mask R-CNN, 11 backbones</text>
+  <text x="514" y="34" text-anchor="middle" font-size="13" font-weight="bold" fill="#444444">Mask R-CNN, 10 architectures</text>
   <rect x="416" y="48" width="196" height="230" rx="6" fill="#ffffff" stroke="#b9b9b4"/>
   <g font-size="12.5">
     <rect x="428" y="62" width="86" height="24" rx="4" fill="#d3e5f2"/>
@@ -86,7 +86,7 @@
     <text x="674" y="162" fill="#555555">11 configs, one model for all sensors</text>
     <rect x="662" y="174" width="264" height="36" rx="6" fill="#ffffff" stroke="#b9b9b4"/>
     <text x="674" y="189" font-weight="bold">4&#8201;&#8212;&#8201;WorldView-3 transfer</text>
-    <text x="674" y="204" fill="#555555">24 configs, simulation prior + budget ladder</text>
+    <text x="674" y="204" fill="#555555">24 configs, initialisation arms + multispectral</text>
     <rect x="662" y="216" width="264" height="36" rx="6" fill="#ffffff" stroke="#b9b9b4"/>
     <text x="674" y="231" font-weight="bold">5&#8201;&#8212;&#8201;Deployment adaptation</text>
     <text x="674" y="246" fill="#555555">hard negatives + positive replay</text>

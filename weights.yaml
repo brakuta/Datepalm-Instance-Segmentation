@@ -31,16 +31,11 @@
 #   Several upstream files were renamed locally. The SHA256 is the identity;
 #   the filename is a convenience.
 #
-# FILLING IN THE UNKNOWNs
-#   sha256:  capture_environment.py already hashes every weight file. Read
-#            them out of env_capture/environment.json rather than re-hashing.
-#   url:     do NOT guess. The authoritative source is the clone already on
-#            the machine:
-#                for d in /opt/*/; do echo "$d"; git -C "$d" remote -v | head -1; \
-#                    git -C "$d" rev-parse HEAD; done
-#            That gives the exact repository and the exact commit the code
-#            was written against. Take the release asset URL from that
-#            repository's own README or releases page.
+# ENTRIES MARKED UNKNOWN
+#   A hash or release-asset URL marked UNKNOWN was not captured before the
+#   original machines were retired, and is not guessed here. For an asset
+#   URL, take the file from the pinned repository's own README or releases
+#   page and confirm it by the SHA256 where one is recorded.
 # =========================================================================
 
 schema_version: 1
@@ -182,9 +177,8 @@ upstream:
     licence: UNKNOWN
     note: >-
       MambaOut is NOT a state-space model despite the name -- it is the
-      ablation that REMOVES the SSM. If the manuscript groups it with the
-      Mamba family, that is a mislabel; it belongs with the CNN/gated-conv
-      baselines.
+      ablation that REMOVES the SSM, and belongs with the CNN/gated-conv
+      baselines rather than the Mamba family.
 
   - name: ResNet-50 / ResNet-101
     local_filename: (none -- fetched at runtime)
@@ -195,13 +189,23 @@ upstream:
       No local file to archive, but also nothing to lose.
     licence: BSD-3-Clause (torchvision)
 
-  - name: Swin-S / ConvNeXt-T / PVTv2-B2
-    local_filename: see derived/ below
-    note: >-
-      The ORIGINAL upstream files are standard MMPreTrain/timm ImageNet
-      checkpoints. What this project loads are the derived, stripped
-      versions listed below, not the originals.
-    licence: Apache-2.0 (OpenMMLab) -- confirm per file
+  - name: Swin-T (ImageNet-1k)
+    local_filename: (none -- downloaded by the config at build time)
+    used_by: maskrcnn_swin_t_uav5cm
+    asset_url: "https://github.com/SwinTransformer/storage/releases/download/v1.0.0/swin_tiny_patch4_window7_224.pth"
+    sha256: UNKNOWN
+    licence: MIT (Swin Transformer)
+
+  - name: Swin-S / ConvNeXt-T / PVTv2-B2 (upstream ImageNet-1k files)
+    used_by: >-
+      the experiment 1 configs download these directly; experiments 2-4
+      load the derived, backbone-only versions listed under derived/
+    asset_url:
+      swin_s: "https://github.com/SwinTransformer/storage/releases/download/v1.0.0/swin_small_patch4_window7_224.pth"
+      convnext_t: "https://download.openmmlab.com/mmclassification/v0/convnext/downstream/convnext-tiny_3rdparty_32xb128-noema_in1k_20220301-795e9634.pth"
+      pvtv2_b2: "https://download.openmmlab.com/mmclassification/v0/pvt/pvt-v2-b2_3rdparty_in1k_20220501-d7f3e26e.pth"
+    sha256: UNKNOWN
+    licence: "MIT (Swin); Apache-2.0 (OpenMMLab-hosted ConvNeXt and PVTv2 conversions); confirm per file"
 
 # -------------------------------------------------------------------------
 # FETCHED AT RUN TIME FROM HUGGINGFACE -- not archived, needs internet

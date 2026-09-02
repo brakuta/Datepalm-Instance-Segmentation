@@ -23,16 +23,16 @@ derived from the mosaic itself:
 
 A fixed m² floor was never sensor-neutral: 0.5 m² is about 200 px at 5 cm
 but about 5.5 px at 30 cm, so a single constant discarded nothing at one
-resolution and real crown fragments at another. A pixel floor means the same
-thing everywhere. Adding a source therefore means adding paths to a job
-file, nothing else.
+resolution and real crown fragments at another. A pixel floor has the same
+meaning at every resolution, so adding a source only requires adding its
+paths to a job file.
 
 ## Dataset-construction policies
 
 Three policies affect the resulting datasets and are worth understanding
 before running.
 
-**Empty tiles go in the training split only.**
+Empty tiles go in the training split only.
 `KEEP_EMPTY_TILES = {"train": True, "val": False, "test": False}`. A
 detector that never sees bare desert or sabkha has no negative evidence for
 them; that gap is the failure the hard-negative work later had to repair.
@@ -41,14 +41,14 @@ COCO mAP, only chances to score false positives, which changes what the
 metric means relative to experiments 1–3 without any warning. Pre-flight
 refuses that configuration.
 
-**Background is capped.** `MAX_EMPTY_FRACTION = 0.30`. With 50% overlap
+Background is capped: `MAX_EMPTY_FRACTION = 0.30`. With 50% overlap
 over mostly bare ground, empties can outnumber palm tiles several times
 over and dominate the loss. Candidates are deferred during the sweep and a
 seeded subset (`EMPTY_SAMPLE_SEED`) is written once the palm-tile count is
 known, so the ratio is exact and reproducible rather than whatever the
 terrain happened to yield.
 
-**Crowns cut by a tile edge become ignore regions.**
+Crowns cut by a tile edge become ignore regions.
 `PARTIAL_POLICY = "flag"`. Dropping them leaves palm pixels in the image
 with no label, which trains the model that a visible crown is background.
 They are written with `flags.partial`, the converter maps that to
@@ -66,7 +66,7 @@ previous one without producing an error:
 | dataloader | `filter_empty_gt=False` | every background tile thrown away |
 
 `filter_empty_gt` is the easiest to get wrong: the only symptom is a lower
-image count in the training log. **Check it on every run.**
+image count in the training log, so check that count on every run.
 
 ## Run
 
@@ -83,7 +83,7 @@ python configs/Custom/utils/image_vector_to_labelme_pipeline.py \
 for S in train val test; do
   python configs/Custom/utils/labelme2coco_palm.py \
       /path/to/tiles/$S/images \
-      --dataset-root /workspace/datasets/COCO/Sat_30cm \
+      --dataset-root <coco_root>/Sat_30cm \
       --split-name ${S}_sat \
       --labels configs/Custom/utils/labels.txt
 done
@@ -110,7 +110,7 @@ The tiling and conversion side handles any band count today.
 # tiler: omit "bands" (or set null) in the job file to keep every band
 # converter: tif is the only format that can carry more than three
 python configs/Custom/utils/labelme2coco_palm.py /path/to/tiles/train/images \
-    --dataset-root /workspace/datasets/COCO/WV3_MS --split-name train_ms \
+    --dataset-root <coco_root>/Sat_30cm_MS --split-name train_ms \
     --image-format tif --labels configs/Custom/utils/labels.txt
 ```
 
@@ -121,14 +121,14 @@ For a 3-band JPEG from a multispectral source you must state the composite:
 --rgb-bands 7 5 3     # NIR-R-G false colour
 ```
 
-The converter refuses to guess. WorldView-3's 8-band order is Coastal,
+The converter does not infer band roles. WorldView-3's 8-band order is Coastal,
 Blue, Green, Yellow, Red, RedEdge, NIR1, NIR2, so bands 1–3 are not RGB,
 and the old `img[:, :, :3]` wrote a plausible-looking but wrong composite
 with no warning.
 
 ### Downstream requirements for multispectral
 
-The data is the easy half. MMDetection will not read an 8-band tile
+Producing the tiles is the smaller part of the work. MMDetection will not read an 8-band tile
 correctly without three changes, and each has a cost:
 
 | Needed | Why | Cost |
@@ -155,25 +155,22 @@ sand, which is precisely the desert false-positive mode the hard-negative
 work addressed, but it will not sharpen crown delineation, and
 pan-sharpening artefacts are themselves a confounder.
 
-### Recommendation
+### RGB and multispectral
 
-Keep experiment 4 (Stage D) at 3-band pan-sharpened RGB. It answers the
-feasibility question, preserves ImageNet initialisation, and stays
-comparable with experiments 1–3.
-
-Multispectral is a reasonable follow-up: whether NIR removes the desert
-false positives that hard-negative mining had to remove by example is a
-useful question with an operational payoff. But it needs its own
-initialisation study, and that belongs in a companion paper, not a row in
-this table. If the imagery is at hand, generating the 8-band tiles now
-costs only one extra converter run.
+The main experiment 4 runs use 3-band pan-sharpened RGB, which preserves
+ImageNet initialisation and stays comparable with experiments 1–3. The
+8-band configs (`_staged_ms`) test whether the extra bands, near-infrared
+in particular, remove the desert false positives that hard-negative
+mining otherwise removes by example; they need the inflated stems from
+`tools_staged/inflate_stem_to_nband.py`. Generating the 8-band tiles
+costs one extra converter run.
 
 ## Numbers to record
 
 `tiling_log.json` holds the full configuration, per-band stretch
 parameters, per-split balance and library versions.
 
-For the manuscript, quote `unique_crowns`, not the polygon count. With 50%
+When reporting dataset size, quote `unique_crowns`, not the polygon count. With 50%
 overlap each crown is written up to four times, so the polygon count
 overstates the dataset roughly fourfold.
 

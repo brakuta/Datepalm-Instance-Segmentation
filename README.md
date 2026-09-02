@@ -2,10 +2,10 @@
 
 # Date-palm instance segmentation across sensors and scales
 
-**Mask R-CNN with eleven interchangeable backbones (CNN, transformer and
-state-space), benchmarked on date-palm crown delineation from 5 cm UAV
-imagery to 30 cm satellite imagery, and adapted into a country-scale
-palm inventory.**
+**Mask R-CNN with ten interchangeable backbone architectures (CNN,
+transformer and state-space) in eighteen size variants, benchmarked on
+date-palm crown delineation from 5 cm UAV imagery to 30 cm satellite
+imagery, and adapted into a country-scale palm inventory.**
 
 [![validate](https://github.com/brakuta/Datepalm-Instance-Segmentation/actions/workflows/validate.yml/badge.svg)](https://github.com/brakuta/Datepalm-Instance-Segmentation/actions/workflows/validate.yml)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
@@ -17,26 +17,28 @@ palm inventory.**
 [Layout](#2-repository-layout) ·
 [Installation](#3-installation) ·
 [Data](#4-data-layout) ·
+[Data preparation](#5-data-preparation) ·
 [Training](#6-training) ·
 [Evaluation](#7-evaluation) ·
 [Inference](#8-inference-with-the-deployed-model)
 
 </div>
 
-![Overview: three imagery sources are tiled to COCO, one Mask R-CNN detector with eleven interchangeable backbones is trained in five experiments, and the adapted model produces a country-scale palm inventory.](docs/figures/overview.svg)
+![Overview: three imagery sources are tiled to COCO, one Mask R-CNN detector with ten interchangeable backbone architectures is trained in five experiments, and the adapted model produces a country-scale palm inventory.](docs/figures/overview.svg)
 
-The repository is a fork of
-[MMDetection](https://github.com/open-mmlab/mmdetection) 3.3.0: it adds
-project configs, backbone wrappers and tooling, and vendors the
-MMDetection train/test entry points unchanged. The imagery, annotations
-and trained checkpoints are not distributed
+The code is built on
+[MMDetection](https://github.com/open-mmlab/mmdetection) 3.3.0, installed
+as a package: this repository adds the project configs, backbone wrappers
+and tooling, and vendors the MMDetection train/test entry points
+unchanged. The imagery, annotations and trained checkpoints are not
+distributed
 ([`WITHHELD.md`](WITHHELD.md) lists what is absent and why); everything
 needed to rebuild the environment, prepare data in the expected format,
 retrain every model and reproduce the evaluation is here.
 
 ## 1. Quick start
 
-**Step 1 — clone and build the environment** (1–2 hours; kernel
+**Step 1. Clone and build the environment** (1–2 hours; kernel
 compilation dominates):
 
 ```bash
@@ -45,49 +47,61 @@ cd Datepalm-Instance-Segmentation
 docker build -f docker/Dockerfile.reconstructed -t mamba-mmdet:rebuilt .
 ```
 
-**Step 2 — start the container** with your data and checkpoints mounted:
+**Step 2. Start the container** with your data and checkpoints mounted:
 
 ```bash
 docker run --gpus all -it --shm-size=16g \
     -v /path/to/datasets:/workspace/datasets \
-    -v /path/to/checkpoints:/workspace/mmdetection/checkpoints \
+    -v /path/to/checkpoints:/workspace/Datepalm-Instance-Segmentation/checkpoints \
+    -v /path/to/work_dirs:/workspace/Datepalm-Instance-Segmentation/work_dirs \
     mamba-mmdet:rebuilt
 ```
 
-**Step 3 — verify the installation** (inside the container; works
-without any data, run it before anything else):
+The image is built from your checkout, so edits made before the build
+(section 4) are inside it. The third mount keeps training outputs when
+the container is removed.
+
+**Step 3. Verify the installation** (inside the container; this needs
+no data, so run it before anything else; two of the models download
+their ImageNet weights from HuggingFace on first build, so it needs
+network access):
 
 ```bash
 python configs/Custom/utils/handover_selftest.py     # imports and versions
 python configs/Custom/utils/smoke_build_models.py    # builds every model, one forward pass
 ```
 
-**Step 4 — train and test a model.** This needs the datasets in place
+**Step 4. Train and test a model.** This needs the datasets in place
 (sections 4 and 5) and the pretrained backbone weights listed in
 `weights.yaml`:
 
 ```bash
-python tools/train.py configs/Custom/1_single_sensor_uav_5cm/maskrcnn_r50_uav5cm.py
+python tools/train.py configs/Custom/1_single_sensor_uav_5cm/maskrcnn_r50_uav5cm.py \
+    --cfg-options default_hooks.checkpoint.save_best=coco/segm_mAP_50 \
+                  custom_hooks.0.monitor=coco/segm_mAP_50
 
 python tools/test.py configs/Custom/1_single_sensor_uav_5cm/maskrcnn_r50_uav5cm.py \
     work_dirs/maskrcnn_r50_uav5cm/best_coco_segm_mAP_50_iter_XXXX.pth
 ```
 
-Section 6 lists all 67 experiment configs; swapping the config file is
-the only change needed to train a different backbone or experiment.
+The `--cfg-options` line is needed for experiment 1 only: its configs
+share a runtime whose checkpoint and early-stopping hooks monitor the
+pooled-validation metric key, while the single-sensor evaluator reports
+`coco/segm_mAP_50` (see section 6). Section 6 lists all 67 experiment
+configs.
 
 ## 2. Repository layout
 
 The five experiments, each in its own folder under `configs/Custom/` with
 its own README:
 
-| | experiment | imagery | configs |
-|---|---|---|---|
-| **1** | [`1_single_sensor_uav_5cm/`](configs/Custom/1_single_sensor_uav_5cm) — backbone benchmark on a fixed sensor | UAV, 5 cm | 18 |
-| **2** | [`2_pooled_15cm_ge_aerial/`](configs/Custom/2_pooled_15cm_ge_aerial) — two 15 cm sources pooled | Google Earth + aerial | 10 |
-| **3** | [`3_unified_multisource/`](configs/Custom/3_unified_multisource) — one model on all three sources | UAV + GE + aerial | 11 |
-| **4** | [`4_satellite_wv3_30cm/`](configs/Custom/4_satellite_wv3_30cm) — satellite transfer with a simulation prior and an annotation-budget ladder | WorldView-3, 30 cm | 24 |
-| **5** | [`5_deployment_finetune/`](configs/Custom/5_deployment_finetune) — hard-negative adaptation of the deployed model | GE, 15 cm, national | 4 |
+| | folder | what it tests | imagery | configs |
+|---|---|---|---|---|
+| **1** | [`1_single_sensor_uav_5cm/`](configs/Custom/1_single_sensor_uav_5cm) | backbone benchmark on a fixed sensor | UAV, 5 cm | 18 |
+| **2** | [`2_pooled_15cm_ge_aerial/`](configs/Custom/2_pooled_15cm_ge_aerial) | two 15 cm sources pooled | Google Earth + aerial | 10 |
+| **3** | [`3_unified_multisource/`](configs/Custom/3_unified_multisource) | one model on all three sources | UAV + GE + aerial | 11 |
+| **4** | [`4_satellite_wv3_30cm/`](configs/Custom/4_satellite_wv3_30cm) | satellite transfer with a simulation prior and an annotation-budget ladder | WorldView-3, 30 cm | 24 |
+| **5** | [`5_deployment_finetune/`](configs/Custom/5_deployment_finetune) | hard-negative adaptation of the deployed model | GE, 15 cm, national | 4 |
 
 Supporting code:
 
@@ -142,7 +156,7 @@ Reference documents at the root:
 Three dependencies compile CUDA extensions against a specific torch/CUDA
 pair: `mmcv 2.1.0` (source-only on PyPI), `mamba-ssm 2.2.4` and
 `causal-conv1d 1.4.0`, plus the `selective_scan` and `dwconv2d` kernels
-from the SSM projects themselves. A version mismatch fails at import, or
+from the state-space model (SSM) projects themselves. A version mismatch fails at import, or
 at the first GPU kernel launch.
 
 ### 3.2 Docker build (recommended)
@@ -168,7 +182,11 @@ torch it finds:
 pip install torch==2.1.0 torchvision==0.16.0 \
     --index-url https://download.pytorch.org/whl/cu121
 
-# 2. the OpenMMLab stack and pure-python dependencies
+# 2. mmcv, built or fetched against the torch just installed (see note below),
+#    then the rest of the OpenMMLab stack and pure-python dependencies
+pip install mmcv==2.1.0 \
+    -f https://download.openmmlab.com/mmcv/dist/cu121/torch2.1/index.html \
+    || pip install --no-build-isolation mmcv==2.1.0
 pip install -r requirements.txt
 
 # 3. the SSM kernels, from git at a tag, against the installed torch
@@ -184,15 +202,24 @@ pip install mambavision
 #    See THIRD_PARTY.md for each repository and commit, and
 #    docker/Dockerfile.reconstructed for the kernel build commands.
 
-# 5. copy the backbone wrappers into the installed mmdet package
+# 5. copy the backbone wrappers into the installed mmdet package, and put
+#    the repository root on PYTHONPATH (the configs import their shared
+#    hooks as configs.Custom._base_palm.*)
 python tools/install_backbones.py
+export PYTHONPATH=$PWD:$PYTHONPATH
 ```
 
-Step 5 is required: the configs import the wrappers as
+Two notes on this sequence. mmcv must be able to see torch while it is
+installed: recent pip versions build every package in an isolated
+environment where torch is absent, and mmcv then installs *without* its
+CUDA ops and fails later at `from mmcv.ops import ...`. The command in
+step 2 takes OpenMMLab's prebuilt wheel for this torch/CUDA pair and
+falls back to a source build that can see the installed torch. Step 5 is
+required as well: the configs import the wrappers as
 `mmdet.models.backbones.*`, so the wrapper files must sit inside the
-installed mmdet package. A plain `pip install mmdet` does not know about
-them, and without this step every Mamba-family config fails to load.
-The Docker build performs this step automatically.
+installed mmdet package, and they import shared hooks as
+`configs.Custom._base_palm.*`, which needs the repository root on
+`PYTHONPATH`. The Docker build performs both automatically.
 
 `tools/train.py` and `tools/test.py` are vendored unchanged from
 MMDetection 3.3.0, so training commands run from the repository root
@@ -205,9 +232,9 @@ python configs/Custom/utils/handover_selftest.py     # imports, versions, GPU vi
 python configs/Custom/utils/smoke_build_models.py    # builds each model, one forward pass
 ```
 
-Run both. The first proves the imports; the second pushes a tensor
-through every model, which is what catches a kernel compiled for the
-wrong GPU architecture. If you see `no kernel image is available for
+Run both. The first checks the imports; the second pushes a tensor
+through every model, which is the step that catches a kernel compiled
+for the wrong GPU architecture. If you see `no kernel image is available for
 execution on the device`, rebuild the kernels with a wider
 `TORCH_CUDA_ARCH_LIST` (the Dockerfile sets
 `7.5;8.0;8.6;8.9;9.0+PTX`).
@@ -230,7 +257,7 @@ model is first built and need network access at that moment.
 All datasets are COCO-format instance segmentation sets with a single
 class, `DatePalm`, one folder per sensor under a common root:
 
-| dataset | source | GSD | tiles | used by experiment |
+| dataset | source | GSD (ground sample distance) | tiles | used by experiment |
 |---|---|---|---|---|
 | `UAV_5cm/` | UAV orthomosaics | 5 cm | 1024 × 1024 | 1, 3 |
 | `GE_15cm/` | Google Earth | 15 cm | 1024 × 1024 | 2, 3, 5 |
@@ -238,11 +265,15 @@ class, `DatePalm`, one folder per sensor under a common root:
 | `Sat_30cm/` | WorldView-3 | 30 cm | 512 × 512 | 4 |
 | `GE_30sim/` | GE 15 cm, degraded to simulate 30 cm | 30 cm | 512 × 512 | 4 (pre-training) |
 
-Each sensor folder contains one image directory per split and an
+Each sensor folder contains one directory per split, holding the tiles
+under `JPEGImages/` (the COCO file names include that prefix), and an
 `Annotations/` directory with the matching COCO JSON. The original work
 kept everything under `/workspace/datasets/COCO/`; either mount your data
 there or edit `data_root` in the dataset configs and keep
-`configs/Custom/Evaluation/sensor_registry.py` consistent with it.
+`configs/Custom/Evaluation/sensor_registry.py` consistent with it. The
+experiment 3 dataset file is the one exception: it names the same trees
+under `/root/datasets/COCO/`, and the Docker image links that path to
+`/workspace/datasets` so one mount serves both.
 
 <details>
 <summary>Full directory tree with the exact split and annotation names</summary>
@@ -262,7 +293,7 @@ there or edit `data_root` in the dataset configs and keep
     train_sat/  val_sat/  test_sat/
     Annotations/train_sat.json  val_sat.json  test_sat.json
   GE_30sim/
-    train/  val/  test/
+    GE_30sim_train/  GE_30sim_val/  GE_30sim_test/
     Annotations/GE_30sim_train.json  GE_30sim_val.json  GE_30sim_test.json
 ```
 
@@ -275,30 +306,40 @@ paths in your copies of the configs:
 1. `data_root` in the dataset files;
 2. `pretrained=` in the per-backbone configs, pointing at the ImageNet
    weights from `weights.yaml`;
-3. `work_dir`, where runs write. Experiments 1 and 2 use relative
-   `./work_dirs/`; the others ship with the original machine's absolute
-   paths.
+3. `work_dir`, where runs write, and `load_from` in the experiment 4 and
+   5 configs, which name the experiment 3 checkpoints they start from.
+   Experiments 1 and 2 write to relative `./work_dirs/`; the others ship
+   with the original machine's absolute paths.
 
 ## 5. Data preparation
 
-The tiling pipeline that produced these datasets is documented in
+The tiling pipeline is documented in
 [`configs/Custom/utils/TILING_README.md`](configs/Custom/utils/TILING_README.md)
-and runs in three steps:
+and runs in two steps:
 
 1. Orthomosaic plus reference polygons in, image tiles plus
    [LabelMe](https://github.com/wkentaro/labelme) JSON out
-   (`image_vector_to_labelme_pipeline.py`). One job file per corpus;
-   tile size, overlap and band selection are derived from each mosaic's
-   ground sample distance. `jobs_example.json` is a template.
-2. LabelMe to COCO conversion (`labelme2coco_palm.py`).
-3. Verification of counts and geometry against the source polygons.
+   (`image_vector_to_labelme_pipeline.py`). One job file per corpus
+   (`jobs_example.json` is a template); band selection and the minimum
+   crown size are derived from each mosaic's ground sample distance
+   (GSD), while the tile size and overlap are fixed settings.
+2. LabelMe to COCO conversion (`labelme2coco_palm.py`), which writes
+   the split directories and annotation files in the layout of
+   section 4 and a `tiling_log.json` with the counts to report.
+
+The shipped pipeline is the version rebuilt for the WorldView-3 corpus
+(experiment 4) and defaults to 512 px tiles with 50% training overlap.
+The UAV, Google Earth and aerial corpora of experiments 1 to 3 were built
+with an earlier version at 1024 px; to reproduce that layout pass
+`--set TILE_SIZE=1024 --set OVERLAP_FRACTION=0.25` (the document
+explains the `--set` mechanism).
 
 Three dataset-construction policies affect results and are explained in
 that document: empty (palm-free) tiles are allowed in training sets only,
 never in validation or test; background tiles are capped at 30% of a
 training set with a fixed seed; and `filter_empty_gt=True` in a config
-silently drops empty tiles, so the image count in the training log is the
-place to notice it.
+drops empty tiles without any message, so the image count in the
+training log is the place to notice it.
 
 For experiment 4, `configs/Custom/tools_staged/` holds the extra
 preparation steps: building the simulated 30 cm pre-training corpus,
@@ -308,13 +349,14 @@ widening pretrained stems for the 8-band multispectral runs
 
 ## 6. Training
 
-Each experiment folder holds one config per backbone:
+Each experiment folder holds one config per backbone. Ten architectures
+are compared, most in two sizes:
 
 | family | backbones |
 |---|---|
-| CNN | ResNet-50, ResNet-101, ConvNeXt-T |
-| Transformer | Swin-T, Swin-S, PVTv2-B2 |
-| State-space | VMamba, Spatial-Mamba, GroupMamba, EfficientVMamba, MambaVision |
+| CNN | ResNet (50, 101), ConvNeXt-T |
+| Transformer | Swin (T, S), PVTv2-B2 |
+| State-space (SSM, Mamba family) | VMamba, Spatial-Mamba, GroupMamba, EfficientVMamba, MambaVision |
 | Control | MambaOut, the ablation with the state-space component removed |
 
 Training is always:
@@ -334,12 +376,20 @@ maskrcnn_{vmamba,spatialmamba,groupmamba,mambaout,mambavision}_{t,s}_uav5cm.py
 maskrcnn_efficientvmamba_{s,b}_uav5cm.py      # EfficientVMamba sizes are S and B
 ```
 
+These configs share a runtime whose checkpoint and early-stopping hooks
+monitor the pooled-validation key `GE_val/coco/segm_mAP_50`, while the
+single-sensor evaluator reports `coco/segm_mAP_50`. Pass
+`--cfg-options default_hooks.checkpoint.save_best=coco/segm_mAP_50
+custom_hooks.0.monitor=coco/segm_mAP_50` when training them, as in the
+quick start.
+
 ### Experiment 2: pooled 15 cm, Google Earth + aerial (10 configs)
 
 Trains on both 15 cm sources together and validates on Google Earth only.
-The aerial test split is held out and scored afterwards through an
-evaluation-only config, so the pooling question is not answered by the
-validation set that selected the checkpoints.
+The aerial test split is held out and scored afterwards with
+`configs/Custom/Evaluation/evaluate_model.py --sensors Aerial`, so the
+pooling question is not answered by the validation set that selected the
+checkpoints.
 
 ### Experiment 3: unified multi-source model (11 configs)
 
@@ -353,16 +403,20 @@ Four config families, named by suffix:
 
 | suffix | purpose |
 |---|---|
-| `_ge30sim_stage1` | pre-training on simulated 30 cm imagery (GE 15 cm downsampled with PSF blur and sensor noise) |
-| `_staged_ft` | fine-tuning on real WorldView-3 across a nested annotation-budget ladder |
-| `_staged_full` | the full-budget reference point |
+| `_ge30sim_stage1` | pre-training on simulated 30 cm imagery (GE 15 cm downsampled with point-spread-function blur and sensor noise), the prior for one arm below |
+| `_staged_full` | full training on real WorldView-3; run from ImageNet weights, from the experiment 3 checkpoint, or from the simulated-30 cm checkpoint, so the three runs differ only in initialisation |
+| `_staged_ft` | fine-tuning on real WorldView-3 from the experiment 3 checkpoint with the early backbone stages frozen |
 | `_staged_ms` | 8-band multispectral WorldView-3 instead of RGB |
 
-The budget ladder is nested and seeded, so each smaller subset is
-contained in the next larger one. Read
+`tools_staged/run_staged_matrix.sh` drives the matrix and injects the
+starting checkpoint for each arm. Read
 [`STAGE_D_README.md`](configs/Custom/4_satellite_wv3_30cm/STAGE_D_README.md)
-in that folder before running these; `tools_staged/run_staged_matrix.sh`
-drives the full matrix.
+in that folder before running these; it records how the design evolved,
+including which arms were dropped from the reported study. The
+annotation-budget manifests built by
+`tools_staged/build_budget_manifests.py` are available tooling for a
+labelling-cost study; they are consumed by overriding a config's
+training annotation file.
 
 ### Experiment 5: deployment and hard-negative adaptation (4 configs)
 
@@ -375,11 +429,12 @@ checkpoints and their reported numbers are unaffected. Supporting tools
 (hard-negative tile mining, threshold recalibration, false-positive
 evaluation) are in `configs/Custom/Finetune_HN/`.
 
-Two practical notes that apply across experiments. Seeds are not fixed in
-the configs; each run draws a seed and writes it only to its own log, so
-reproducing a specific run needs that log. Training budgets differ
-between experiments; check the schedule a config inherits before
-comparing numbers across them.
+Two practical notes that apply across experiments. Experiments 2 to 5
+fix `randomness.seed = 0` in their shared runtimes; experiment 1 leaves
+the seed unset, so each of its runs draws one and records it only in its
+own log (pass `--cfg-options randomness.seed=0` to fix it). Training
+budgets differ between experiments; check the schedule a config inherits
+before comparing numbers across them.
 
 ## 7. Evaluation
 
@@ -403,7 +458,10 @@ python configs/Custom/Evaluation/compile_cross_transfer.py --manifest <manifest>
 
 `sensor_registry.py` in that folder is the single source of truth for
 sensor names, annotation paths and evaluation protocols; keep it
-consistent with your `data_root`. The Evaluation README also lists what
+consistent with your `data_root`. The `--work-root` and work-directory
+arguments of the compilers must point at wherever your runs wrote (the
+README examples use a `work_dirs/Stage_<X>/` layout; the configs write
+where their `work_dir` says). The Evaluation README also lists what
 to check before comparing numbers across experiments (training budgets,
 the MambaOut control, the detection cap).
 
@@ -426,19 +484,19 @@ python -m palm_inference.run_inference \
 
 Three settings to check before trusting an output map:
 
-1. The CLI defaults (tile 512, overlap 128, threshold 0.35) are not the
-   deployment settings. Deployment used 1024 / 256 / 0.30, as above.
-   Omitting the flags succeeds and produces a different map.
-2. Without `--postprocess`, palms straddling tile boundaries are counted
-   twice.
+1. The tiling and threshold flags default to the deployment settings
+   (1024 / 256 / 0.30); they are written out above so the values are
+   visible. Changing any of them produces a different map.
+2. Tile seams within one image are always resolved; `--postprocess`
+   merges and de-duplicates across neighbouring input images. Without
+   it, palms in the overlap between two mosaics are counted twice.
 3. The model was trained at roughly 15 cm/px. At 1 m/px a crown is a few
-   pixels across and will not be detected. Resolution matters more than
-   any flag.
+   pixels across and will not be detected, whatever the other settings.
 
 ## 9. Repository checks
 
-CI runs on every push, needs no GPU, torch or network, and finishes in
-seconds. The same check runs locally:
+CI runs on every push, needs no GPU or torch, and finishes in seconds.
+The same check runs locally:
 
 ```bash
 python tools/validate_repo.py
