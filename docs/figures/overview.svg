@@ -36,7 +36,7 @@
   <path d="M 408 127 l -7 -4 v 8 z" fill="#777777"/>
 
   <!-- column 3: detector and backbones -->
-  <text x="514" y="34" text-anchor="middle" font-size="13" font-weight="bold" fill="#444444">Mask R-CNN, 10 backbone architectures</text>
+  <text x="514" y="34" text-anchor="middle" font-size="13" font-weight="bold" fill="#444444">Mask R-CNN, 10 architectures</text>
   <rect x="416" y="48" width="196" height="230" rx="6" fill="#ffffff" stroke="#b9b9b4"/>
   <g font-size="12.5">
     <rect x="428" y="62" width="86" height="24" rx="4" fill="#d3e5f2"/>
