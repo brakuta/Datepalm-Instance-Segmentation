@@ -17,7 +17,7 @@ With those four, most problems can be diagnosed from the report alone.
 
 ## Before opening an issue about installation
 
-Most installation problems are one of three things, all covered in the
+Most installation problems are one of a few things, all covered in the
 README:
 
 - torch installed after mmcv. mmcv 2.1.0 compiles against whatever torch
@@ -27,6 +27,11 @@ README:
   different card. Rebuild with a wider `TORCH_CUDA_ARCH_LIST`.
 - Missing `/opt` trees. The backbone wrappers contain no architecture
   code and expect the upstream projects at fixed paths.
+- `selective_scan_cuda_core is not defined` when GroupMamba runs. The
+  VMamba kernel was built with only its default `oflex` variant. Build the
+  `core`, `ndstate` and `oflex` variants, as the Dockerfile does.
+- `rasterio is not installed`, or another geospatial package. Those come
+  from `requirements.txt`; the Dockerfile installs them explicitly.
 
 Run both checks before reporting:
 

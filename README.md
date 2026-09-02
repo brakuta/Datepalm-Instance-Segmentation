@@ -191,9 +191,23 @@ docker build -f docker/Dockerfile.reconstructed -t mamba-mmdet:rebuilt .
 [`docker/Dockerfile.reconstructed`](docker/Dockerfile.reconstructed) is
 pinned to the exact commits used in this work and performs all of the
 steps below in the right order, including cloning the upstream backbone
-repositories to `/opt` and compiling their kernels. The `docker run`
-command with the expected mount points is documented at the end of the
-file and in the quick start above.
+repositories to `/opt` and compiling their kernels. No GPU is needed
+during the build: the kernels are compiled for every architecture in
+`TORCH_CUDA_ARCH_LIST` (sm_75 to sm_90) and are checked on the GPU
+afterwards by the two commands in section 3.4. The `docker run` command
+with the expected mount points is documented at the end of the file and
+in the quick start above.
+
+Three upstream kernel sources need a small edit before they compile in
+this environment. The Dockerfile applies each edit with `sed` at the step
+where it is needed, explains it in a comment there, and stops the build
+if the upstream file has changed so that an edit no longer lands. The
+same edits are listed under manual installation below.
+
+Keep a copy of a working image. The CUDA base image prints a deprecation
+notice at start-up and NVIDIA schedules such tags for deletion, so once
+the checks in section 3.4 pass, run `docker save mamba-mmdet:rebuilt -o
+mamba-mmdet-rebuilt.tar` or push the image to a registry you control.
 
 ### 3.3 Manual installation
 
@@ -201,6 +215,15 @@ Follow this order. It matters, because mmcv compiles against whatever
 torch it finds:
 
 ```bash
+# 0. pins that every later pip call must respect. NumPy must stay below 2
+#    (torch 2.1.0 cannot exchange tensors with NumPy 2, and nothing in the
+#    package metadata says so); timm must stay at 1.0.15 (two upstream
+#    requirements files pin 0.4.12, which MambaVision and MambaOut cannot use)
+printf '%s\n' 'numpy<2' 'torch==2.1.0' 'torchvision==0.16.0' \
+    'torchaudio==2.1.0' 'timm==1.0.15' 'mmengine==0.10.1' \
+    'transformers==4.50.0' > pip-constraints.txt
+export PIP_CONSTRAINT=$PWD/pip-constraints.txt
+
 # 1. torch first, from the cu121 index
 pip install torch==2.1.0 torchvision==0.16.0 \
     --index-url https://download.pytorch.org/whl/cu121
@@ -224,6 +247,9 @@ pip install mambavision
 #    /opt/vmamba /opt/spatial_mamba /opt/groupmamba /opt/efficientvmamba
 #    See THIRD_PARTY.md for each repository and commit, and
 #    docker/Dockerfile.reconstructed for the kernel build commands.
+#    Install Spatial-Mamba's and VSSD's requirements files without their
+#    timm line, then apply the three edits in the table below and build
+#    the kernels with --no-build-isolation.
 
 # 5. copy the backbone wrappers into the installed mmdet package, and put
 #    the repository root on PYTHONPATH (the configs import their shared
@@ -231,6 +257,15 @@ pip install mambavision
 python tools/install_backbones.py
 export PYTHONPATH=$PWD:$PYTHONPATH
 ```
+
+The three upstream edits in step 4, each applied by the Dockerfile with
+the reason in a comment beside it:
+
+| file | edit | why |
+|---|---|---|
+| `/opt/vmamba/kernels/selective_scan/setup.py` | disable the compute-capability query and drop the `-arch=sm_XX` flag | the query needs a GPU, and the flag makes torch ignore `TORCH_CUDA_ARCH_LIST` |
+| same file | `MODES = ["core", "ndstate", "oflex"]` instead of `["oflex"]` | GroupMamba calls the `core` variant directly |
+| `/opt/spatial_mamba/kernels/dwconv2d/depthwise_fwd/launch.cu` | add `#include <ATen/core/grad_mode.h>` after the ATen include | `at::NoGradGuard` is no longer reachable through `ATen/ATen.h` in torch 2.1 |
 
 Two notes on this sequence. mmcv must be able to see torch while it is
 installed: recent pip versions build every package in an isolated
@@ -255,12 +290,18 @@ python configs/Custom/utils/handover_selftest.py     # imports, versions, GPU vi
 python configs/Custom/utils/smoke_build_models.py    # builds each model, one forward pass
 ```
 
-Run both. The first checks the imports; the second pushes a tensor
-through every model, which is the step that catches a kernel compiled
-for the wrong GPU architecture. If you see `no kernel image is available for
-execution on the device`, rebuild the kernels with a wider
-`TORCH_CUDA_ARCH_LIST` (the Dockerfile sets
-`7.5;8.0;8.6;8.9;9.0+PTX`).
+Run both inside the container, started with `--gpus all`. The first
+checks the imports, the versions, GPU visibility, and that every
+compiled kernel a backbone wrapper needs is present; it should end with
+`Everything passed`. The second builds every experiment 3 model, without
+pretrained weights, and pushes a tensor through each backbone; it should
+end with `11 of 11 model(s) built and ran`. That second step is the one
+that catches a kernel compiled for the wrong GPU architecture. If you see
+`no kernel image is available for execution on the device`, rebuild the
+kernels with a wider `TORCH_CUDA_ARCH_LIST` (the Dockerfile sets
+`7.5;8.0;8.6;8.9;9.0+PTX`). MambaVision fetches its model code and
+configuration from HuggingFace the first time it is built, so that run
+needs network access once.
 
 ### 3.5 Pretrained backbone weights
 
