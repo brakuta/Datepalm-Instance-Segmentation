@@ -38,7 +38,7 @@ retrain every model and reproduce the evaluation is here.
 
 ## 1. Quick start
 
-**Step 1. Clone and build the environment** (1–2 hours; kernel
+**Step 1. Clone and build the environment** (about an hour; kernel
 compilation dominates):
 
 ```bash
