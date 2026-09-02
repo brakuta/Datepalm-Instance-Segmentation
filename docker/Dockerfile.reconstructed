@@ -189,9 +189,16 @@ RUN cd /opt/vmamba/kernels/selective_scan \
            echo 'setup.py patch did not apply; upstream file changed' >&2; exit 1; fi \
     && pip install --no-build-isolation .
 
+# dwconv2d uses at::NoGradGuard but includes only <ATen/ATen.h>, which
+# stopped pulling in the declaration by torch 2.1. One added include line;
+# the build fails loudly if the upstream file changes and it no longer lands.
 RUN cd /opt/spatial_mamba/kernels/selective_scan \
     && pip install --no-build-isolation . \
     && cd /opt/spatial_mamba/kernels/dwconv2d \
+    && sed -i '0,/^#include <ATen\/ATen.h>$/s//#include <ATen\/ATen.h>\n#include <ATen\/core\/grad_mode.h>/' \
+        depthwise_fwd/launch.cu \
+    && if ! grep -q 'ATen/core/grad_mode.h' depthwise_fwd/launch.cu; then \
+           echo 'launch.cu patch did not apply; upstream file changed' >&2; exit 1; fi \
     && pip install --no-build-isolation .
 
 # groupmamba and msvmamba ship their own selective_scan. Whether the project
