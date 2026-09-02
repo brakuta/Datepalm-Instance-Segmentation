@@ -48,7 +48,7 @@ def installed_backbones_dir() -> Path:
         import mmdet
     except ImportError:
         sys.exit('mmdet is not installed. Install the environment first '
-                 '(see README, "Reproducing the environment").')
+                 '(see README, "Installation").')
     if getattr(mmdet, '__file__', None) is None:
         # A namespace package: the repository's own mmdet/ directory was
         # found on sys.path and no real installation exists.

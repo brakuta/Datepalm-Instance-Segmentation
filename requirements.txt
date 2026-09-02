@@ -1,5 +1,5 @@
-# Pinned to the versions this work actually ran on. See README, "Reproducing
-# the environment", and docker/Dockerfile.reconstructed for the full recipe.
+# Pinned to the versions this work actually ran on. See README, "Installation",
+# and docker/Dockerfile.reconstructed for the full recipe.
 #
 # ORDER IS NOT OPTIONAL. Do not `pip install -r` this file top to bottom and
 # expect it to work:

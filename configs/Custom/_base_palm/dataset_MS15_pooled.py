@@ -3,7 +3,7 @@
 # --------------------------------------------------------------------------
 # Pooled GE 15 cm + Aerial 15 cm training corpus for the Stage B
 # benchmark, with GE-only validation. Aerial is held out for post-hoc
-# evaluation via a separate eval-only config (eval_aerial_ms15.py)
+# evaluation via a separate eval-only config (Evaluation/evaluate_model.py --sensors Aerial)
 # invoked through tools/test.py against the best GE-val checkpoint.
 # Stage B only — not imported by any Stage A config.
 #
@@ -14,7 +14,7 @@
 #   val_dataloader   : GE-only (single CocoDataset)
 #   val_evaluator    : bare CocoMetric (no MultiDatasetsEvaluator
 #                       wrapper required for single-source val)
-#   test_dataloader  : mirrors val (MMDet convention; eval_aerial_ms15.py
+#   test_dataloader  : mirrors val (MMDet convention; Evaluation/evaluate_model.py --sensors Aerial
 #                       overrides this for the Aerial test pass)
 #
 # Emitted val metric key: 'coco/segm_mAP_50' (no namespace prefix).
@@ -175,7 +175,7 @@ val_evaluator = dict(
 
 # --- Test dataloader / evaluator ------------------------------------------
 # MMDet convention: mirror val by default. Aerial post-hoc evaluation
-# is performed through eval_aerial_ms15.py which overrides these two
+# is performed through Evaluation/evaluate_model.py --sensors Aerial which overrides these two
 # keys to point at the Aerial partition. This keeps the training
 # launch lightweight (no Aerial workers spawned at runner init) and
 # isolates the "test" semantics to an explicit eval-only config.

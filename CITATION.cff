@@ -2,7 +2,7 @@ cff-version: 1.2.0
 message: >-
   If you use this code, please cite the manuscript below. Please also cite
   MMDetection and the upstream backbone projects listed in THIRD_PARTY.md --
-  this repository is a fork of MMDetection and the backbone architectures
+  this repository is built on MMDetection and the backbone architectures
   are the work of their respective authors.
 title: >-
   Date-palm instance segmentation across sensors and scales: CNN,
@@ -14,7 +14,7 @@ type: software
 license: Apache-2.0
 repository-code: "https://github.com/brakuta/Datepalm-Instance-Segmentation"
 abstract: >-
-  Mask R-CNN with eleven interchangeable backbones evaluated on date-palm
+  Mask R-CNN with ten interchangeable backbone architectures evaluated on date-palm
   crown instance segmentation from 5 cm UAV to 30 cm satellite imagery,
   with the hard-negative adaptation used for a country-scale inventory.
 keywords:

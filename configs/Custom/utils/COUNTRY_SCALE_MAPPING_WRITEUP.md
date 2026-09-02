@@ -1,5 +1,11 @@
 # Country-Scale Date-Palm Mapping: Write-Up Notes
 
+> The parameters recorded here describe the single-file pipeline
+> `palm_inference_pipeline.py` in this folder. The command recorded in the
+> project handover as the one run for the national inventory used the
+> `palm_inference/` package with tile 1024, overlap 256 and threshold 0.30
+> (see the repository README, "Inference with the deployed model").
+
 Historical write-up notes for the operational UAE-wide mapping run, kept as
 the record of the deployment model, the hard-negative adaptation, the
 inference pipeline, and the limitations that must be disclosed alongside any
@@ -23,7 +29,8 @@ The benchmark checkpoints and their reported metrics are untouched. Country-scal
 mapping uses a separate deployment model: the Stage C unified multi-source
 Spatial-Mamba-S `best_GE` checkpoint, adapted by hard-negative fine-tuning, run
 through a separate deploy config. The only architectural difference is
-`test_cfg.rcnn.max_per_img` raised from 300 to 1000, because a 1024 px GE
+`test_cfg.rcnn.max_per_img` raised from 300 to 1000 (raised again to 2000
+for the second national run; see the deploy config header), because a 1024 px GE
 tile over a dense plantation can hold more than 300 crowns and the benchmark cap
 would truncate the detections without raising an error. Keeping this in a
 deploy config rather than editing the evaluated config is what preserves the
@@ -141,7 +148,7 @@ Because the units are disjoint, the merge step's cross-unit NMS handles the
 boundaries identically whether the two neighbours were computed on the same
 machine or not.
 
-Cross-machine parity is worth one sentence and a number in the paper. On a
+Cross-machine parity was checked directly. On a
 block with byte-identical inputs on both machines (UAE_374): 18,135 vs 18,136
 detections, a difference of 0.006%, with identical diameter percentiles. On a
 block whose Google Earth tiles had been downloaded at different dates
@@ -224,7 +231,7 @@ Second tier: EPSG:3857 → 32640 reprojection; multi-part crown merging (351
 merges); `pycocotools.frPyObjects` rasterisation matching COCOeval; 50% tile
 validity threshold; deterministic file ordering and fixed seeds.
 
-Also disclose in Methods: Stage C's non-uniform `accumulative_counts` (2 for
+Also note: Stage C's non-uniform `accumulative_counts` (2 for
 three backbones, 4 for Spatial-Mamba-S); Spatial-Mamba's different anchor set;
 and that val/test contain no background tiles.
 

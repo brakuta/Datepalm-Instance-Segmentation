@@ -165,7 +165,7 @@ at the adapted checkpoint.
 The first adaptation kills the obvious confusers; a second, smaller round on
 whatever it *still* gets wrong closes the long tail. Re-run inference → flag the
 remaining FPs → append to `HardNeg_GE` → re-fine-tune from the adapted (not the
-original) checkpoint. Two rounds is normally enough to stabilise.
+original) checkpoint. Two rounds are normally enough to stabilise.
 
 ## Summary of the procedure
 The deployed model is adapted to the operational domain by hard-negative

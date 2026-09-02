@@ -88,7 +88,7 @@ arm c freezes precisely the layers that needed to change. Arm cf exists to
 remove that explanation. Arm c is kept for ConvNeXt-T only, as the
 illustrative case of why the conservative recipe fails.
 
-## 3b. Training budget: the answer to "why not 120k like Stage C?"
+## 3b. Training budget: why 60k iterations rather than the 120k of Stage C
 
 Stage C ran 120,000 iterations at per-GPU batch 1 = 120,000 samples.
 Stage D arm B0 runs 60,000 iterations at per-GPU batch 2 = 120,000 samples.
@@ -134,8 +134,9 @@ one contrast-stretch group:
 | val | 407 | 13,343 | 610 | 12,733 | 0 |
 | test | 413 | 14,886 | 741 | 14,145 | 0 |
 
-There are 63,946 distinct reference crowns. Quote that, not the 178k
-polygons; 50% overlap writes each training crown up to four times.
+There are 63,946 distinct reference crowns; that is the dataset size to
+report, not the 178k polygons, because 50% overlap writes each training
+crown up to four times.
 
 Supersedes the 2,413 figure in `schedule_staged_ft.py` and the 267/142/124 in
 the header of `dataset_sat_30cm_staged.py`; both are stale. Confirm before
@@ -194,8 +195,8 @@ Order matters: SpatialMamba-S first, then MambaVision-S, the two heaviest. If
 either reports CUDA out of memory, that one backbone falls back to batch 1 +
 `accumulative_counts=4` at `max_iters=120_000`, which preserves 120,000
 samples and effective batch 4; only the number of optimiser steps changes
-(30,000 either way, since accumulation doubles with the halved batch). Say so
-and the fallback goes into that config.
+(30,000 either way, since accumulation doubles with the halved batch). If a
+run needs it, the fallback goes into that config with a note.
 
 ## 6. Run: both arms
 
@@ -252,7 +253,7 @@ and are superseded: not compared, not shown.
 
 ## 8. Reporting
 
-One table, twelve rows: 4 backbones × {zero-shot, B0, C}. Columns: segm
+The results table has twelve rows: 4 backbones × {zero-shot, B0, C}. Columns: segm
 mAP@50, F1, and wall-clock training time (the cost half of the claim). Stage
 D is reported compactly, as a feasibility finding rather than a full study,
 with the table carrying the result.

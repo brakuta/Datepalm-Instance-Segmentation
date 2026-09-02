@@ -13,7 +13,7 @@ a hidden confound.
 
 ```
 maskrcnn_{r50,r101}_uav5cm.py                    CNN baselines
-maskrcnn_{convnext_t}_uav5cm.py                  modern CNN
+maskrcnn_convnext_t_uav5cm.py                    modern CNN
 maskrcnn_{swin_t,swin_s,pvtv2_b2}_uav5cm.py      transformers
 maskrcnn_{vmamba,spatialmamba,groupmamba,
           mambavision}_{t,s}_uav5cm.py                   state-space

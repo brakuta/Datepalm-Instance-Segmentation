@@ -21,12 +21,12 @@
 #
 #   This file adds them back, pinned to the commits measured on the machine.
 #
-# THIS IS THE SECOND-BEST ARTEFACT
-#   The exported image (mamba_slim.tar, 17.6 GB) is the first-best: it needs
-#   no build and cannot drift. Use this file when that image will not load --
-#   a new CPU architecture, a Docker version that rejects the format, or a
-#   need to change a version. Expect to debug it; a two-hour build has many
-#   ways to fail, and the pinned dependencies below may be withdrawn upstream.
+# WHAT TO EXPECT
+#   This file is the supported way to rebuild the environment (the image the
+#   work ran on is not distributed). A two-hour build has many ways to fail,
+#   and the pinned dependencies below may be withdrawn upstream; the
+#   self-test named below is the acceptance criterion, not the build
+#   finishing.
 #
 #   BUILD:  docker build -f Dockerfile.reconstructed -t mamba-mmdet:rebuilt .
 #           (expect 1-2 hours; the kernel builds dominate)
@@ -188,6 +188,10 @@ RUN mkdir -p /workspace/mmdetection /workspace/Datepalm-Instance-Segmentation/ch
     && ln -s /workspace/Datepalm-Instance-Segmentation/checkpoints \
              /workspace/mmdetection/checkpoints
 
+# The experiment 3 dataset file names the COCO trees under /root/datasets/,
+# every other dataset file under /workspace/datasets/. One mount serves both.
+RUN mkdir -p /workspace/datasets && ln -s /workspace/datasets /root/datasets
+
 # PYTHONPATH carries only three of the seven /opt trees. That is correct and not an
 # oversight: the wrappers for vmamba, groupmamba and efficientvmamba insert
 # their own paths at import time. Do not "fix" it by adding them -- vmamba and
@@ -205,6 +209,7 @@ CMD ["/bin/bash"]
 #   docker run --gpus all -it --shm-size=16g \
 #       -v /path/to/datasets:/workspace/datasets \
 #       -v /path/to/checkpoints:/workspace/Datepalm-Instance-Segmentation/checkpoints \
+#       -v /path/to/work_dirs:/workspace/Datepalm-Instance-Segmentation/work_dirs \
 #       mamba-mmdet:rebuilt
 #   The dataset configs expect COCO trees under /workspace/datasets/COCO/
 #   (see configs/Custom/_base_palm/) -- mount your data there or edit

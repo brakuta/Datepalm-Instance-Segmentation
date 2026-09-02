@@ -11,8 +11,7 @@ measure this failure mode, because the benchmark's test tiles contain
 palms.
 
 **This is an operational adaptation, not part of the benchmark.** The
-unified checkpoints and their reported numbers are untouched. Describe it
-as a post-processing step, not as a competing model.
+unified checkpoints and their reported numbers are untouched.
 
 ## How it works
 
@@ -53,9 +52,16 @@ problem.
 Two steps are required after every fine-tuning run:
 
 ```bash
-python configs/Custom/Finetune_HN/calibrate_threshold.py   # re-derive the threshold
-python configs/Custom/Finetune_HN/eval_hard_negatives.py   # measure BOTH axes
+# re-derive the operating threshold on the validation split
+python configs/Custom/Finetune_HN/calibrate_threshold.py \
+    --config <config> --checkpoint <ckpt> --ann <val.json> --images <val_dir> --out <dir>
+
+# measure false-positive suppression and recall together
+python configs/Custom/Finetune_HN/eval_hard_negatives.py \
+    --config <config> --checkpoint <label>=<ckpt> --images <tiles_dir> --out <dir>
 ```
+
+Both scripts document their remaining options in their headers.
 
 1. Recalibrate the threshold: a fine-tuned model does not inherit the
    old operating point.

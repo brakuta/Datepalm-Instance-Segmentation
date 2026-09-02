@@ -12,7 +12,7 @@
 #
 #   Training:   pooled GE + Aerial with SensorBalancedSampler(alpha=0.3)
 #   Validation: GE-only (single bare CocoMetric)
-#   Aerial:     held out for post-hoc evaluation via eval_aerial_ms15.py
+#   Aerial:     held out for post-hoc evaluation via Evaluation/evaluate_model.py
 #               invoked through tools/test.py against the best GE-val
 #               checkpoint; not monitored during training
 #
@@ -50,7 +50,8 @@
 #   Reset to False for every fresh run.
 # -----------------------------------------------------------------------
 seed   = 0
-resume = True  # <-- set to True only to resume an interrupted run
+resume = True  # auto-resume: continues from the latest checkpoint in
+               # work_dir if one exists; a fresh run is unaffected
 
 # --- Environment ----------------------------------------------------------
 # Matches Stage A environment exactly. No thread-count overrides.

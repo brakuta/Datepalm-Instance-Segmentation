@@ -15,7 +15,7 @@ Last verified: 2026-08-31.
 
 | project | version | licence |
 |---|---|---|
-| [MMDetection](https://github.com/open-mmlab/mmdetection) | 3.3.0 (this fork) | Apache-2.0 |
+| [MMDetection](https://github.com/open-mmlab/mmdetection) | 3.3.0 (installed package; `tools/train.py` and `tools/test.py` vendored) | Apache-2.0 |
 | [MMEngine](https://github.com/open-mmlab/mmengine) | 0.10.1 | Apache-2.0 |
 | [MMCV](https://github.com/open-mmlab/mmcv) | 2.1.0 | Apache-2.0 |
 | [MMPreTrain](https://github.com/open-mmlab/mmpretrain) | 1.2.0 | Apache-2.0 |
@@ -83,11 +83,11 @@ repository contain no architecture code.
 
 ### Also present in the environment, not used by any reported result
 `/opt/vim` ([hustvl/Vim](https://github.com/hustvl/Vim), commit
-`dd0358ad…`), `/opt/vssd`
-([YuHengsss/VSSD](https://github.com/YuHengsss/VSSD), commit `c10de2f8…`),
-`/opt/msvmamba`
+`dd0358ad1e42701f22afbefa0717cc8825cf9f45`), `/opt/vssd`
+([YuHengsss/VSSD](https://github.com/YuHengsss/VSSD), commit
+`c10de2f8b717a04459b09cbd651de2e768f302c8`), `/opt/msvmamba`
 ([YuHengsss/MSVMamba](https://github.com/YuHengsss/MSVMamba), commit
-`c3940191…`).
+`c39401918e94f11eb29e4932b901b3fd139f1377`).
 
 ## CNN and transformer baselines
 

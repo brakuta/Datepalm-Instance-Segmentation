@@ -20,7 +20,7 @@
   "jobs": [
     {
       "name": "WV3_Ajman",
-      "mosaic": "Wordview3/Ajman_WV3_2021_30cm.tif",
+      "mosaic": "WorldView3/Ajman_WV3_2021_30cm.tif",
       "shapefile": "National_DatePalm_Mapping.gdb",
       "layer": "WV3_Datepalm_Ajman_Fuj",
       "id_field": "auto",
@@ -29,7 +29,7 @@
     },
     {
       "name": "WV3_Fujairah",
-      "mosaic": "Wordview3/Kalba_WV3_2022_30cm.tif",
+      "mosaic": "WorldView3/Kalba_WV3_2022_30cm.tif",
       "shapefile": "National_DatePalm_Mapping.gdb",
       "layer": "WV3_Datepalm_Ajman_Fuj",
       "id_field": "auto",
@@ -51,7 +51,7 @@
     {
       "_note": "Explicit bands only for a non-RGB composite, e.g. NIR-R-G.",
       "name": "WV3_NIR_example",
-      "mosaic": "Wordview3/Some_8band_WV3.tif",
+      "mosaic": "WorldView3/Some_8band_WV3.tif",
       "shapefile": "National_DatePalm_Mapping.gdb",
       "layer": "WV3_Datepalm_Ajman_Fuj",
       "id_field": "auto",

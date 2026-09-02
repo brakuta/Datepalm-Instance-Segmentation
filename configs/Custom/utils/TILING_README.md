@@ -83,7 +83,7 @@ python configs/Custom/utils/image_vector_to_labelme_pipeline.py \
 for S in train val test; do
   python configs/Custom/utils/labelme2coco_palm.py \
       /path/to/tiles/$S/images \
-      --dataset-root /workspace/datasets/COCO/Sat_30cm \
+      --dataset-root <coco_root>/Sat_30cm \
       --split-name ${S}_sat \
       --labels configs/Custom/utils/labels.txt
 done
@@ -110,7 +110,7 @@ The tiling and conversion side handles any band count today.
 # tiler: omit "bands" (or set null) in the job file to keep every band
 # converter: tif is the only format that can carry more than three
 python configs/Custom/utils/labelme2coco_palm.py /path/to/tiles/train/images \
-    --dataset-root /workspace/datasets/COCO/WV3_MS --split-name train_ms \
+    --dataset-root <coco_root>/Sat_30cm_MS --split-name train_ms \
     --image-format tif --labels configs/Custom/utils/labels.txt
 ```
 
@@ -155,25 +155,22 @@ sand, which is precisely the desert false-positive mode the hard-negative
 work addressed, but it will not sharpen crown delineation, and
 pan-sharpening artefacts are themselves a confounder.
 
-### Recommendation
+### RGB and multispectral
 
-Keep experiment 4 (Stage D) at 3-band pan-sharpened RGB. It answers the
-feasibility question, preserves ImageNet initialisation, and stays
-comparable with experiments 1–3.
-
-Multispectral is a reasonable follow-up: whether NIR removes the desert
-false positives that hard-negative mining had to remove by example is a
-useful question with an operational payoff. But it needs its own
-initialisation study, and that belongs in a companion paper, not a row in
-this table. If the imagery is at hand, generating the 8-band tiles now
-costs only one extra converter run.
+The main experiment 4 runs use 3-band pan-sharpened RGB, which preserves
+ImageNet initialisation and stays comparable with experiments 1–3. The
+8-band configs (`_staged_ms`) test whether the extra bands, near-infrared
+in particular, remove the desert false positives that hard-negative
+mining otherwise removes by example; they need the inflated stems from
+`tools_staged/inflate_stem_to_nband.py`. Generating the 8-band tiles
+costs one extra converter run.
 
 ## Numbers to record
 
 `tiling_log.json` holds the full configuration, per-band stretch
 parameters, per-split balance and library versions.
 
-For the manuscript, quote `unique_crowns`, not the polygon count. With 50%
+When reporting dataset size, quote `unique_crowns`, not the polygon count. With 50%
 overlap each crown is written up to four times, so the polygon count
 overstates the dataset roughly fourfold.
 
