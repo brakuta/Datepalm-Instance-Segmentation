@@ -23,16 +23,16 @@ derived from the mosaic itself:
 
 A fixed m² floor was never sensor-neutral: 0.5 m² is about 200 px at 5 cm
 but about 5.5 px at 30 cm, so a single constant discarded nothing at one
-resolution and real crown fragments at another. A pixel floor means the same
-thing everywhere. Adding a source therefore means adding paths to a job
-file, nothing else.
+resolution and real crown fragments at another. A pixel floor has the same
+meaning at every resolution, so adding a source only requires adding its
+paths to a job file.
 
 ## Dataset-construction policies
 
 Three policies affect the resulting datasets and are worth understanding
 before running.
 
-**Empty tiles go in the training split only.**
+Empty tiles go in the training split only.
 `KEEP_EMPTY_TILES = {"train": True, "val": False, "test": False}`. A
 detector that never sees bare desert or sabkha has no negative evidence for
 them; that gap is the failure the hard-negative work later had to repair.
@@ -41,14 +41,14 @@ COCO mAP, only chances to score false positives, which changes what the
 metric means relative to experiments 1–3 without any warning. Pre-flight
 refuses that configuration.
 
-**Background is capped.** `MAX_EMPTY_FRACTION = 0.30`. With 50% overlap
+Background is capped: `MAX_EMPTY_FRACTION = 0.30`. With 50% overlap
 over mostly bare ground, empties can outnumber palm tiles several times
 over and dominate the loss. Candidates are deferred during the sweep and a
 seeded subset (`EMPTY_SAMPLE_SEED`) is written once the palm-tile count is
 known, so the ratio is exact and reproducible rather than whatever the
 terrain happened to yield.
 
-**Crowns cut by a tile edge become ignore regions.**
+Crowns cut by a tile edge become ignore regions.
 `PARTIAL_POLICY = "flag"`. Dropping them leaves palm pixels in the image
 with no label, which trains the model that a visible crown is background.
 They are written with `flags.partial`, the converter maps that to
@@ -66,7 +66,7 @@ previous one without producing an error:
 | dataloader | `filter_empty_gt=False` | every background tile thrown away |
 
 `filter_empty_gt` is the easiest to get wrong: the only symptom is a lower
-image count in the training log. **Check it on every run.**
+image count in the training log, so check that count on every run.
 
 ## Run
 
@@ -121,14 +121,14 @@ For a 3-band JPEG from a multispectral source you must state the composite:
 --rgb-bands 7 5 3     # NIR-R-G false colour
 ```
 
-The converter refuses to guess. WorldView-3's 8-band order is Coastal,
+The converter does not infer band roles. WorldView-3's 8-band order is Coastal,
 Blue, Green, Yellow, Red, RedEdge, NIR1, NIR2, so bands 1–3 are not RGB,
 and the old `img[:, :, :3]` wrote a plausible-looking but wrong composite
 with no warning.
 
 ### Downstream requirements for multispectral
 
-The data is the easy half. MMDetection will not read an 8-band tile
+Producing the tiles is the smaller part of the work. MMDetection will not read an 8-band tile
 correctly without three changes, and each has a cost:
 
 | Needed | Why | Cost |

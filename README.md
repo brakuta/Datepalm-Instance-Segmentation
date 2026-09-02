@@ -156,7 +156,7 @@ Reference documents at the root:
 Three dependencies compile CUDA extensions against a specific torch/CUDA
 pair: `mmcv 2.1.0` (source-only on PyPI), `mamba-ssm 2.2.4` and
 `causal-conv1d 1.4.0`, plus the `selective_scan` and `dwconv2d` kernels
-from the SSM projects themselves. A version mismatch fails at import, or
+from the state-space model (SSM) projects themselves. A version mismatch fails at import, or
 at the first GPU kernel launch.
 
 ### 3.2 Docker build (recommended)
@@ -232,9 +232,9 @@ python configs/Custom/utils/handover_selftest.py     # imports, versions, GPU vi
 python configs/Custom/utils/smoke_build_models.py    # builds each model, one forward pass
 ```
 
-Run both. The first proves the imports; the second pushes a tensor
-through every model, which is what catches a kernel compiled for the
-wrong GPU architecture. If you see `no kernel image is available for
+Run both. The first checks the imports; the second pushes a tensor
+through every model, which is the step that catches a kernel compiled
+for the wrong GPU architecture. If you see `no kernel image is available for
 execution on the device`, rebuild the kernels with a wider
 `TORCH_CUDA_ARCH_LIST` (the Dockerfile sets
 `7.5;8.0;8.6;8.9;9.0+PTX`).
@@ -257,7 +257,7 @@ model is first built and need network access at that moment.
 All datasets are COCO-format instance segmentation sets with a single
 class, `DatePalm`, one folder per sensor under a common root:
 
-| dataset | source | GSD | tiles | used by experiment |
+| dataset | source | GSD (ground sample distance) | tiles | used by experiment |
 |---|---|---|---|---|
 | `UAV_5cm/` | UAV orthomosaics | 5 cm | 1024 × 1024 | 1, 3 |
 | `GE_15cm/` | Google Earth | 15 cm | 1024 × 1024 | 2, 3, 5 |
@@ -491,8 +491,7 @@ Three settings to check before trusting an output map:
    merges and de-duplicates across neighbouring input images. Without
    it, palms in the overlap between two mosaics are counted twice.
 3. The model was trained at roughly 15 cm/px. At 1 m/px a crown is a few
-   pixels across and will not be detected. Resolution matters more than
-   any flag.
+   pixels across and will not be detected, whatever the other settings.
 
 ## 9. Repository checks
 

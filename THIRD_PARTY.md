@@ -110,4 +110,4 @@ No pretrained or trained weights are published in this repository.
 `weights.yaml` records each one by official source and, for the files
 central to the reported results, by SHA256, which is what lets a
 reader confirm they have the identical file. Several were renamed locally,
-so the hash is the identity and the filename is not.
+so match files by hash rather than by filename.

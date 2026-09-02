@@ -82,7 +82,7 @@ shipped: step 1 below writes an annotated example, which you then edit.
 Most are already present in the training environment; if needed:
 
 ```bash
-pip install scipy matplotlib pillow --break-system-packages
+pip install scipy matplotlib pillow   # add --break-system-packages only outside a virtual environment
 ```
 
 ## 4. Usage
@@ -109,7 +109,7 @@ python configs/Custom/Feature_Analysis/run_feature_analysis.py run \
 #   deep       CPU: separability, level energy, spectra, inter-level similarity
 #   visualize  GPU: multiscale feature grids
 #   composite  GPU: composite figure recipes
-#   anatomy    GPU: scale-anatomy hero figure
+#   anatomy    GPU: scale-anatomy summary figure
 ```
 
 The GPU/CPU phase split lets the qualitative panels be re-rendered without
@@ -151,7 +151,7 @@ supplement. `level`, `source` (`neck`/`backbone`) and `view`
 │   ├── interlevel_similarity.{pdf,png}     # deep: pyramid redundancy
 │   ├── multiscale/                         # families × pyramid levels
 │   ├── composite/                          # isolated-axis recipes
-│   └── anatomy/                            # hero figure: input + GT + P2-P5
+│   └── anatomy/                            # summary figure: input + GT + P2-P5
 ├── tables/                                 # CSV for every metric
 ├── provenance.json                         # seed, config hash, package versions
 └── deep_provenance.json                    # deep phase: version, thresholds
@@ -182,7 +182,7 @@ supplement. `level`, `source` (`neck`/`backbone`) and `view`
 
 ## 7. Reproducibility
 
-Seeds are derived deterministically (salt-free) so tile sampling and location
+Seeds are derived deterministically, without a per-run salt, so tile sampling and location
 subsampling are stable across runs; `provenance.json` records the seed, a hash
 of the configuration, and the torch/mmdet versions used.
 

@@ -10,7 +10,7 @@ shrubs, ghaf, acacia) and scores it as palms. The benchmark does not
 measure this failure mode, because the benchmark's test tiles contain
 palms.
 
-**This is an operational adaptation, not part of the benchmark.** The
+This is an operational adaptation, not part of the benchmark: the
 unified checkpoints and their reported numbers are untouched.
 
 ## How it works
@@ -28,7 +28,7 @@ Fine-tuning on negatives alone erodes recall, because the model is only
 ever taught to suppress detections. The original positive training data
 is therefore replayed alongside the negatives.
 
-**If you build a variant of this, keep the replay.** Removing it
+**Keep the replay in any variant of this recipe.** Removing it
 produces a model that reports far fewer false positives while also
 finding fewer palms, and the recall loss raises no error; it shows up
 only if measured.
@@ -69,8 +69,8 @@ Both scripts document their remaining options in their headers.
    close to blind to it, because a tile with no ground truth contributes
    no true positives.
 
-Check both axes. A run that suppresses false positives at the cost of
-recall has not improved the model.
+Check both axes: a run that suppresses false positives at the cost of
+recall has traded one error for another rather than removing one.
 
 ## Running the deployed model
 

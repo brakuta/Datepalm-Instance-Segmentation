@@ -95,7 +95,7 @@ as a `.jgw` + `.prj` beside each tile, plus `tile_footprints.gpkg`.
 
 Always run with `--dry-run` first. It reports how many tiles each image and
 each AOI polygon would produce and writes nothing, which is the cheapest way
-to catch a CRS mismatch or extents that miss half the imagery:
+to catch a coordinate reference system (CRS) mismatch or extents that miss half the imagery:
 
 ```bash
 python configs/Custom/Finetune_HN/make_aoi_tiles.py \
@@ -121,7 +121,7 @@ attention precisely on the errors being fixed.
 
 `--val-frac 0.2` holds out whole AOIs, not individual tiles. With 25%
 overlap, adjacent tiles share pixels; a tile-level split would leak and inflate
-the reported recall gain. Splitting by AOI is the honest version.
+the reported recall gain. Splitting by AOI avoids that leak.
 
 Key knobs:
 
@@ -157,11 +157,11 @@ labelling it costs days.
 Open `images_train/` and `images_val/` in LabelMe. The sidecars are pre-filled
 if you used `--seed-labels`.
 
-**The one hard rule: within every tile you keep, EVERY palm must be labelled.**
+**Within every tile you keep, every palm must be labelled.**
 A partially annotated tile trains the model to suppress the palms you skipped,
 which is the exact failure you are removing. If a tile is too dense or
-ambiguous to finish, delete the tile and its .json; a smaller clean set beats
-a larger dirty one.
+ambiguous to finish, delete the tile and its .json; a smaller fully
+labelled set trains better than a larger partially labelled one.
 
 Tiles that genuinely contain zero palms are fine and useful: the config keeps
 them (`filter_empty_gt=False`) as in-domain negatives.
@@ -320,4 +320,5 @@ interest, and the operating threshold is re-calibrated after adaptation.
 Benchmark checkpoints and their reported metrics are unaffected.
 
 Report the before/after on the stratified validation sample (recall per
-density class), not the raw detection count; that is the defensible number.
+density class), not the raw detection count, which is affected by the
+sampling.

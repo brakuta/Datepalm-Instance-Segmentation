@@ -47,7 +47,7 @@ no polygons.
 Aim for ~2,000 negative tiles spanning the observed confuser types
 (bare-desert shrubs, ghaf clusters, irrigation-edge scrub); see "Size the
 negative set to the iteration budget" below for where that number comes from.
-Diversity of confusers beats raw count.
+Diversity of confuser types matters more than the raw count.
 
 ### Preferred route: mine the tiles the model actually gets wrong
 Where manually delineated palm-free AOIs (areas of interest) *and* existing
@@ -91,7 +91,7 @@ python .../make_hard_negative_coco.py --from-detections <merged_master.gpkg> \
 Pure-empty negatives risk teaching the model to miss real palms if a palm slips
 into a "negative" tile. If the selected areas are not guaranteed palm-free,
 instead LABEL the real palms in those tiles (labelme → labelme2coco) and leave
-the shrubs unlabeled: tiles with palms keep them, tiles with only shrubs become
+the shrubs unlabelled: tiles with palms keep them, tiles with only shrubs become
 negatives. Set the config's HN source `filter_empty_gt=False` either way. This
 cannot induce false negatives and is the more defensible route.
 
@@ -161,7 +161,7 @@ Open both `<area_id>_palms.gpkg` outputs in QGIS. Success = desert detections
 largely gone, farm detections unchanged. Only then point the country-scale run
 at the adapted checkpoint.
 
-## Two-round loop (recommended for "once and for all")
+## Two-round loop (recommended when a single pass leaves residual confusers)
 The first adaptation kills the obvious confusers; a second, smaller round on
 whatever it *still* gets wrong closes the long tail. Re-run inference → flag the
 remaining FPs → append to `HardNeg_GE` → re-fine-tune from the adapted (not the
@@ -178,4 +178,4 @@ threshold is re-calibrated after adaptation. Benchmark checkpoints and their
 reported metrics are unaffected.
 
 Report the before/after on the stratified validation sample (precision
-per density class), not just the raw count; that is the defensible number.
+per density class), not just the raw count, which depends on the sampling.

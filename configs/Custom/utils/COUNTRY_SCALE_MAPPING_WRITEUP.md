@@ -99,7 +99,7 @@ checkpoint changes.
 
 ## 3. Inference pipeline
 
-Four things matter for correctness at national scale; the rest is engineering.
+Four aspects of the pipeline determine correctness at national scale.
 
 ### (a) Processing units and virtual mosaics
 The national GE 15 cm archive is organised as ~250 folders of ~100 GeoTIFFs, each

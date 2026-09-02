@@ -8,7 +8,7 @@ computational-efficiency profile per model.
 
 Folder location: `configs/Custom/Evaluation/`
 
-> **What you need before running anything here.** These scripts operate
+> Before running anything here: these scripts operate
 > on trained checkpoints and prepared COCO-format test sets, neither of
 > which is distributed with this repository (see `WITHHELD.md` and
 > `weights.yaml` at the repository root). Dataset paths default to

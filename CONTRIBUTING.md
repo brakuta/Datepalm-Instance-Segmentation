@@ -13,7 +13,7 @@ Open an issue with:
 3. Output of `python configs/Custom/utils/handover_selftest.py`
 4. Output of `nvidia-smi`
 
-Those four identify almost any problem here without further exchange.
+With those four, most problems can be diagnosed from the report alone.
 
 ## Before opening an issue about installation
 

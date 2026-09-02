@@ -60,7 +60,7 @@ The FP32 decision was justified in the internal working notes (not published)
 on two grounds: (i) it
 avoids an FP16/FP32 dtype mismatch in `batched_nms` for the pure-SSM
 backbones, and (ii) it matches Stage B for cross-stage comparability. The
-second justification is contradicted by the Stage B artifacts themselves. The
+second justification is contradicted by the Stage B artefacts themselves. The
 Stage B schedule, `schedule_unified_MS_80k.py`, specifies:
 
 ```

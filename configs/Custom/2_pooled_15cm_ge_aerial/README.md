@@ -13,7 +13,7 @@ Google Earth only; aerial is held out and scored afterwards with
 `configs/Custom/Evaluation/evaluate_model.py --sensors Aerial` against
 the best GE-validation checkpoint.
 
-The asymmetry is deliberate. If aerial were in the validation set, the
+The asymmetry is intentional. If aerial were in the validation set, the
 checkpoint would be chosen partly by its aerial performance, and the
 question of whether pooling helps on aerial would be answered by data
 that had already influenced checkpoint selection. Holding aerial out

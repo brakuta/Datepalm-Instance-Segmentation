@@ -64,7 +64,7 @@ refuses to build the config.
 |---|---|
 | `sensor_balanced_sampler.py`, `sensor_balanced_sampler_n.py` | per-sensor rebalancing (experiment 2) and source-local batch construction (experiment 3) for the pooled datasets |
 | `per_sensor_best_checkpoint_hook.py` | keeps the best checkpoint per sensor, not just overall |
-| `mean_sensor_metric_hook.py` | reports the mean across sensors, so one dominant source cannot carry the number |
+| `mean_sensor_metric_hook.py` | reports the mean across sensors rather than a total dominated by the largest source |
 | `nms_fp32_guard.py` | forces NMS to FP32 under mixed precision, where it is dtype-unsafe |
 | `mem_probe_hook.py`, `benchmark_logging_hook.py` | memory and throughput instrumentation |
 | `loading_multispectral.py`, `ms_pipelines.py`, `ms_data_preprocessor.py` | the >3-channel path |

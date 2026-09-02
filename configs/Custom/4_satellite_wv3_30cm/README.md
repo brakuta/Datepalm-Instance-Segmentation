@@ -8,9 +8,9 @@ imagery, where a crown is roughly 17 px across instead of 100, and
 which initialisation transfers best.
 
 **Read `STAGE_D_README.md` in this folder before running anything here.**
-It is the most involved experiment in the repository. `STAGE_D_README.md`
-is the historical design memo, kept as written during the work; this README
-describes what the folder ships.
+It is the historical design memo, kept as written during the work, and
+records how the arms below were chosen; this README describes what the
+folder ships.
 
 ## Config families
 

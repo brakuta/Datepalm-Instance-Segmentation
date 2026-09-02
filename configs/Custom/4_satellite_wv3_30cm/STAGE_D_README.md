@@ -9,9 +9,9 @@
 
 Supersedes v3 (four backbones × three arms + budget curve). v4 frames
 Stage D as a feasibility experiment, not a full study: two arms, four
-backbones, eight runs, one table. The scope cut was deliberate. Every
-additional experimental axis demands its own methodological documentation and
-validation, not just GPU hours.
+backbones, eight runs, one table. The scope was cut because each
+additional experimental axis needs its own methodological documentation and
+validation, not only GPU hours.
 
 ## 1. The one question
 
@@ -19,7 +19,7 @@ validation, not just GPU hours.
 WorldView-3, and is 30 cm workable at all for date-palm instance
 segmentation?*
 
-Everything that does not answer that question is out.
+Anything that does not bear on that question is outside the experiment.
 
 ## 2. Matrix: 4 backbones × 2 arms
 
@@ -33,7 +33,7 @@ Everything that does not answer that question is out.
 | Arm | Initialisation | Adaptation regime | Config |
 |---|---|---|---|
 | **b0** | ImageNet (natural images) | full training: nothing frozen, lr 1e-4, backbone lr_mult 0.1, 60k iters | `maskrcnn_<bb>_staged_full.py` |
-| **cf** | Stage C `best_GE_*` (cross-resolution RS) | full training, **identical to b0** | same config + `load_from=` |
+| **cf** | Stage C `best_GE_*` (cross-resolution remote-sensing prior) | full training, **identical to b0** | same config + `load_from=` |
 | *c* | Stage C `best_GE_*` | constrained fine-tune: `frozen_stages=2`, head lr 2e-5, backbone lr_mult 0.01, 40k iters | `maskrcnn_<bb>_staged_ft.py` + `load_from=` |
 
 Plus zero-shot Stage C → WV-3 (no training; evaluation only).

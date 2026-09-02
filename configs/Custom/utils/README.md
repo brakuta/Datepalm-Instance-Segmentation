@@ -30,8 +30,8 @@ editing the file.
 | `capture_environment.py` | records resolved versions, CUDA/driver, compiled-extension status and weight hashes |
 
 Run both of the first two. A backbone can import cleanly and still fail
-on its first forward pass: importing exercises the Python side, a
-kernel launch exercises the GPU.
+on its first forward pass, because importing only runs Python code
+while the forward pass launches the compiled GPU kernels.
 
 ## Analysis
 
