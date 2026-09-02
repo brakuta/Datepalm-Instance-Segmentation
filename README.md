@@ -176,6 +176,11 @@ Reference documents at the root:
 | mmengine / mmcv / mmdet / mmpretrain | 0.10.1 / 2.1.0 / 3.3.0 / 1.2.0 |
 | mamba-ssm / causal-conv1d | 2.2.4 / 1.4.0 |
 
+Last verified 2026-09-02: a clean build of this repository on Docker
+Desktop for Windows, with no GPU visible to the build, followed by both
+checks in section 3.4 on a TITAN RTX (sm_75). All 28 environment checks
+passed and all 11 experiment 3 models built and ran a forward pass.
+
 Three dependencies compile CUDA extensions against a specific torch/CUDA
 pair: `mmcv 2.1.0` (source-only on PyPI), `mamba-ssm 2.2.4` and
 `causal-conv1d 1.4.0`, plus the `selective_scan` and `dwconv2d` kernels
