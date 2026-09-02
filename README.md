@@ -36,7 +36,7 @@ retrain every model and reproduce the evaluation is here.
 
 ## 1. Quick start
 
-**Step 1 — clone and build the environment** (1–2 hours; kernel
+**Step 1. Clone and build the environment** (1–2 hours; kernel
 compilation dominates):
 
 ```bash
@@ -45,7 +45,7 @@ cd Datepalm-Instance-Segmentation
 docker build -f docker/Dockerfile.reconstructed -t mamba-mmdet:rebuilt .
 ```
 
-**Step 2 — start the container** with your data and checkpoints mounted:
+**Step 2. Start the container** with your data and checkpoints mounted:
 
 ```bash
 docker run --gpus all -it --shm-size=16g \
@@ -54,15 +54,15 @@ docker run --gpus all -it --shm-size=16g \
     mamba-mmdet:rebuilt
 ```
 
-**Step 3 — verify the installation** (inside the container; works
-without any data, run it before anything else):
+**Step 3. Verify the installation** (inside the container; this works
+without any data, so run it before anything else):
 
 ```bash
 python configs/Custom/utils/handover_selftest.py     # imports and versions
 python configs/Custom/utils/smoke_build_models.py    # builds every model, one forward pass
 ```
 
-**Step 4 — train and test a model.** This needs the datasets in place
+**Step 4. Train and test a model.** This needs the datasets in place
 (sections 4 and 5) and the pretrained backbone weights listed in
 `weights.yaml`:
 
@@ -81,13 +81,13 @@ the only change needed to train a different backbone or experiment.
 The five experiments, each in its own folder under `configs/Custom/` with
 its own README:
 
-| | experiment | imagery | configs |
-|---|---|---|---|
-| **1** | [`1_single_sensor_uav_5cm/`](configs/Custom/1_single_sensor_uav_5cm) — backbone benchmark on a fixed sensor | UAV, 5 cm | 18 |
-| **2** | [`2_pooled_15cm_ge_aerial/`](configs/Custom/2_pooled_15cm_ge_aerial) — two 15 cm sources pooled | Google Earth + aerial | 10 |
-| **3** | [`3_unified_multisource/`](configs/Custom/3_unified_multisource) — one model on all three sources | UAV + GE + aerial | 11 |
-| **4** | [`4_satellite_wv3_30cm/`](configs/Custom/4_satellite_wv3_30cm) — satellite transfer with a simulation prior and an annotation-budget ladder | WorldView-3, 30 cm | 24 |
-| **5** | [`5_deployment_finetune/`](configs/Custom/5_deployment_finetune) — hard-negative adaptation of the deployed model | GE, 15 cm, national | 4 |
+| | folder | what it tests | imagery | configs |
+|---|---|---|---|---|
+| **1** | [`1_single_sensor_uav_5cm/`](configs/Custom/1_single_sensor_uav_5cm) | backbone benchmark on a fixed sensor | UAV, 5 cm | 18 |
+| **2** | [`2_pooled_15cm_ge_aerial/`](configs/Custom/2_pooled_15cm_ge_aerial) | two 15 cm sources pooled | Google Earth + aerial | 10 |
+| **3** | [`3_unified_multisource/`](configs/Custom/3_unified_multisource) | one model on all three sources | UAV + GE + aerial | 11 |
+| **4** | [`4_satellite_wv3_30cm/`](configs/Custom/4_satellite_wv3_30cm) | satellite transfer with a simulation prior and an annotation-budget ladder | WorldView-3, 30 cm | 24 |
+| **5** | [`5_deployment_finetune/`](configs/Custom/5_deployment_finetune) | hard-negative adaptation of the deployed model | GE, 15 cm, national | 4 |
 
 Supporting code:
 
