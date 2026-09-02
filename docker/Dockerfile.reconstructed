@@ -99,11 +99,6 @@ RUN pip install \
 
 RUN pip install packaging
 
-# The geospatial stack that palm_inference/ and the evaluation scripts
-# import at module scope. The self-test checks for these three by name; a
-# first rebuild without them passed every other check and failed there.
-RUN pip install rasterio==1.4.4 geopandas==1.1.3 pyproj
-
 # From git at a tag, NOT from PyPI -- both compile CUDA extensions, and
 # --no-build-isolation is required so they build against the torch installed
 # above rather than a fresh one pulled into an isolated build env.
@@ -222,6 +217,12 @@ RUN cd /opt/spatial_mamba/kernels/selective_scan \
 # One package was pip-installed into the running container after the image was
 # built, found by `docker diff`. It is the only genuine drift in six days.
 RUN pip install ptflops==0.7.5
+
+# The geospatial stack that palm_inference/ and the evaluation scripts
+# import at module scope. The self-test checks for these three by name; a
+# first rebuild without them passed every other check and failed there. Placed after the kernel builds so adding it did not
+# invalidate their cached layers.
+RUN pip install rasterio==1.4.4 geopandas==1.1.3 pyproj
 
 # Fail here, not at first use, if a later step undid one of the pins above.
 RUN python -c "import numpy, torch, timm; torch.zeros(1).numpy(); \
