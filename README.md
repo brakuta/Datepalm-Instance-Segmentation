@@ -61,6 +61,29 @@ The image is built from your checkout, so edits made before the build
 (section 4) are inside it. The third mount keeps training outputs when
 the container is removed.
 
+<details>
+<summary>On Windows</summary>
+
+Run steps 1 and 2 from PowerShell with Docker Desktop running; the
+`docker` command is available there directly. Use Windows paths for
+the host side of each mount and a backtick for line continuation:
+
+```powershell
+docker build -f docker/Dockerfile.reconstructed -t mamba-mmdet:rebuilt .
+docker run --gpus all -it --shm-size=16g `
+    -v C:\path\to\datasets:/workspace/datasets `
+    -v C:\path\to\checkpoints:/workspace/Datepalm-Instance-Segmentation/checkpoints `
+    -v C:\path\to\work_dirs:/workspace/Datepalm-Instance-Segmentation/work_dirs `
+    mamba-mmdet:rebuilt
+```
+
+Everything from step 3 onwards runs inside the container and is the
+same on every host. If Git is not installed, download the repository
+as a ZIP from GitHub and unpack it; the build does not need the `.git`
+directory.
+
+</details>
+
 **Step 3. Verify the installation** (inside the container; this needs
 no data, so run it before anything else; two of the models download
 their ImageNet weights from HuggingFace on first build, so it needs
