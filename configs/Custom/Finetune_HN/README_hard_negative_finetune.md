@@ -1,32 +1,32 @@
-# Hard-negative fine-tuning — false-positive suppression runbook
+# Hard-negative fine-tuning: false-positive suppression runbook
 
 *HN = hard negative. The companion runbook,
 `README_false_negative_finetune.md`, covers the FN (false-negative,
 missed-palm) round.*
 
-Goal: adapt the deployed **Stage C Spatial-Mamba-S (best_GE)** model to reject
+Goal: adapt the deployed Stage C Spatial-Mamba-S (best_GE) model to reject
 desert false positives (palm-like shrubs, ghaf/acacia) without touching the
-benchmark or losing recall. This is an **operational deployment model**, kept
+benchmark or losing recall. This is an operational deployment model, kept
 separate from the Stage C benchmark checkpoints.
 
 ## The misconception this resolves
 "You cannot train instance segmentation with background" is not true for
-Mask R-CNN. On a tile with **zero annotations**, every RPN anchor and RoI
-proposal is an unmatched **negative**, so the tile is pure "nothing here is a
+Mask R-CNN. On a tile with zero annotations, every RPN anchor and RoI
+proposal is an unmatched negative, so the tile is pure "nothing here is a
 palm" supervision for the classification heads; box/mask losses just get no
-positives. The benchmark's `filter_empty_gt=True` only *skips* empty tiles —
+positives. The benchmark's `filter_empty_gt=True` only skips empty tiles;
 it is a data choice, not a framework limit. We flip it to `False` on the
 hard-negative source only.
 
-## Step 0 — Radiometry (GE: nothing to reconcile)
+## Step 0: Radiometry (nothing to reconcile for GE)
 GE_train was NOT contrast-stretched (the tiling pipeline stretched
 WorldView-3 only), and the GE country inference pipeline also does not stretch
-uint8 imagery. Training, negatives, and inference are therefore all raw uint8 —
-consistent. Generate the negatives with `--stretch none` (the default) so they
-match. Do **not** stretch GE negatives. (`--stretch match-train` exists only
-for a WV-3-style workflow whose positive tiles were stretched.)
+uint8 imagery. Training, negatives, and inference are therefore all raw uint8
+and mutually consistent. Generate the negatives with `--stretch none` (the
+default) so they match. Do not stretch GE negatives. (`--stretch match-train`
+exists only for a WV-3-style workflow whose positive tiles were stretched.)
 
-## Step 1 — Generate hard negatives from selected images (image-selection workflow)
+## Step 1: Generate hard negatives from selected images (image-selection workflow)
 Select tens of 1×1 km images over desert / struggle areas that contain the
 palm-like confusers **and no real date palms** (choose areas away from farms;
 any real palm in a negative tile teaches the model to miss palms). Then tile
@@ -41,11 +41,11 @@ python configs/Custom/Finetune_HN/make_hard_negative_coco.py \
 
 `--from-images` accepts a folder or a single .tif, tiles non-overlapping, drops
 tiles that are mostly nodata, and passes uint8 through unchanged (matches
-GE_train and GE inference). No shapefile, no labelme2coco — negatives have no
-polygons.
+GE_train and GE inference). No shapefile and no labelme2coco: negatives have
+no polygons.
 
-Aim for **~2,000** negative tiles spanning the observed confuser types
-(bare-desert shrubs, ghaf clusters, irrigation-edge scrub) — see "Size the
+Aim for ~2,000 negative tiles spanning the observed confuser types
+(bare-desert shrubs, ghaf clusters, irrigation-edge scrub); see "Size the
 negative set to the iteration budget" below for where that number comes from.
 Diversity of confusers beats raw count.
 
@@ -72,10 +72,10 @@ python configs/Custom/Finetune_HN/make_aoi_tiles.py \
 `--max-per-aoi` spreads the budget over areas and keeps each area's worst
 tiles. Run with `--dry-run` first to see how many tiles contain FPs at all.
 
-**Match the codec.** `train_GE` is JPEG. Lossless GeoTIFF negatives mixed with
-JPEG positives let the classifier separate the sources by compression artefact
-alone — "clean image = not a palm" — so pass `--format jpg --jpeg-ref` and the
-new tiles inherit the corpus quantisation tables exactly.
+The codec must match. `train_GE` is JPEG. Lossless GeoTIFF negatives mixed
+with JPEG positives let the classifier separate the sources by compression
+artefact alone ("clean image = not a palm"), so pass `--format jpg --jpeg-ref`
+and the new tiles inherit the corpus quantisation tables exactly.
 
 ### Two other input modes
 ```bash
@@ -95,46 +95,46 @@ the shrubs unlabeled: tiles with palms keep them, tiles with only shrubs become
 negatives. Set the config's HN source `filter_empty_gt=False` either way. This
 cannot induce false negatives and is the more defensible route.
 
-## Step 2 — Point the config at the data
+## Step 2: Point the config at the data
 Edit the top of
 `configs/Custom/5_deployment_finetune/maskrcnn_spatialmamba_s_finetune_hn.py`:
-- `GE_ROOT`   — the real GE 15 cm COCO root (positives to replay)
-- `HN_ROOT`   — the `--out` dir from Step 1
-- `load_from` — the `best_GE` checkpoint to adapt
-- `HN_WEIGHT` — **compute it, do not use 0.3 blindly** (see below)
-- `max_iters` — start `4000`
+- `GE_ROOT`: the real GE 15 cm COCO root (positives to replay)
+- `HN_ROOT`: the `--out` dir from Step 1
+- `load_from`: the `best_GE` checkpoint to adapt
+- `HN_WEIGHT`: compute it, do not use 0.3 blindly (see below)
+- `max_iters`: start `4000`
 
 ### HN_WEIGHT is a multiplier on natural size, not a share
 `SensorBalancedSamplerN` allocates `quota_s = w_s·N_s / Σ(w_t·N_t) · Σ N_t`, so
-the weight scales each source's *existing* size. With GE_train at **19,472**
+the weight scales each source's *existing* size. With GE_train at 19,472
 tiles, a small negative set at `HN_WEIGHT = 0.3` is almost invisible: 500
-negatives get `0.3·500 / (19472 + 150) = 0.8 %` of batches — the round would do
-essentially nothing. For a target negative share `p`:
+negatives get `0.3·500 / (19472 + 150) = 0.8 %` of batches, so the round would
+do essentially nothing. For a target negative share `p`:
 
 ```
 HN_WEIGHT = (p / (1 - p)) · (N_positives / N_negatives)
 ```
 
 Example: `p = 0.25`, `N_pos = 19472`, `N_neg = 2500` → `0.333 × 7.79 ≈ 2.6`.
-Sane band for `p` is **0.2–0.35**. The original `0.3` suggestion only makes
+Sane band for `p` is 0.2–0.35. The original `0.3` suggestion only makes
 sense when the negative set is itself in the thousands.
 
 ### Size the negative set to the iteration budget
 `batch_size=1`, so `max_iters` iterations see `max_iters` tiles in total. At
-`max_iters = 4000` and `p = 0.25` only **1,000 negative samples** are drawn —
-so a 9,000-tile negative set would be mostly unused, and each tile seen far
+`max_iters = 4000` and `p = 0.25` only 1,000 negative samples are drawn, so
+a 9,000-tile negative set would be mostly unused, and each tile seen far
 less than once. Match the two:
 
 ```
 useful N_negatives  ≈  p · max_iters / (times each tile should be seen)
 ```
 
-At `p = 0.25`, `max_iters = 8000`, 1× coverage → ~2,000 tiles. Prefer **fewer,
-harder** negatives (rank them by the false positives they contain — see
+At `p = 0.25`, `max_iters = 8000`, 1× coverage → ~2,000 tiles. Prefer fewer,
+harder negatives (rank them by the false positives they contain; see
 `make_aoi_tiles.py --detections --min-detections`) over a large set the
 schedule never reaches.
 
-## Step 3 — Fine-tune
+## Step 3: Fine-tune
 ```bash
 export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 python tools/train.py \
@@ -142,11 +142,11 @@ python tools/train.py \
 ```
 ~1–2 GPU-hours. Watch the GE-val line every 1000 iters: **segm mAP@50 must not
 drop materially** from the base model's value. The run saves `best_*.pth` on
-GE-val segm mAP@50 — that best checkpoint is the ship gate. If val mAP falls,
+GE-val segm mAP@50; that best checkpoint is the ship gate. If val mAP falls,
 lower `HN_WEIGHT` (recompute with a smaller `p`) or cut `max_iters` to
 2000–3000 and re-run.
 
-## Step 4 — Validate the fix actually worked (before deploying)
+## Step 4: Validate the fix actually worked (before deploying)
 Re-run inference on a struggle folder with the adapted checkpoint and compare
 desert FP counts against the original:
 
@@ -177,5 +177,5 @@ Validation-set mAP is monitored to prevent forgetting; the operating
 threshold is re-calibrated after adaptation. Benchmark checkpoints and their
 reported metrics are unaffected.
 
-Report the before/after on the **stratified validation sample** (precision
-per density class), not just the raw count — that is the defensible number.
+Report the before/after on the stratified validation sample (precision
+per density class), not just the raw count; that is the defensible number.

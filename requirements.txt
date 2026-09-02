@@ -7,15 +7,21 @@
 #   1. torch FIRST, from the cu121 index:
 #        pip install torch==2.1.0 torchvision==0.16.0 \
 #            --index-url https://download.pytorch.org/whl/cu121
-#   2. then the mm* stack below -- mmcv 2.1.0 is source-only on PyPI and
-#      COMPILES against whatever torch it finds
+#   2. then mmcv 2.1.0 on its own, able to SEE the torch just installed:
+#        pip install mmcv==2.1.0 \
+#            -f https://download.openmmlab.com/mmcv/dist/cu121/torch2.1/index.html \
+#        || pip install --no-build-isolation mmcv==2.1.0
+#      mmcv is sdist-only on PyPI. Under pip >= 25.3 a plain install builds
+#      it in an isolated environment without torch, and its setup.py then
+#      skips the CUDA ops without failing; the detectors break later at
+#      `from mmcv.ops import ...`. Then the rest of this file.
 #   3. then causal-conv1d and mamba-ssm FROM GIT AT A TAG, with
 #      --no-build-isolation, so they build against the torch installed above
 #      rather than a fresh one pulled into an isolated build env
 #   4. then the SSM projects' own kernels (selective_scan, dwconv2d)
 #
-# Installing this file in one shot gets step 2 wrong and fails at import
-# with a missing-symbol error that says nothing about ordering.
+# Installing this file in one shot gets step 2 wrong: mmcv installs without
+# its compiled ops, and the failure appears only when a model is built.
 
 # --- step 2: the OpenMMLab stack ---
 mmengine==0.10.1

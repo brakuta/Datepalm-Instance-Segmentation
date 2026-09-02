@@ -50,7 +50,7 @@ docker build -f docker/Dockerfile.reconstructed -t mamba-mmdet:rebuilt .
 ```bash
 docker run --gpus all -it --shm-size=16g \
     -v /path/to/datasets:/workspace/datasets \
-    -v /path/to/checkpoints:/workspace/mmdetection/checkpoints \
+    -v /path/to/checkpoints:/workspace/Datepalm-Instance-Segmentation/checkpoints \
     mamba-mmdet:rebuilt
 ```
 
@@ -168,7 +168,11 @@ torch it finds:
 pip install torch==2.1.0 torchvision==0.16.0 \
     --index-url https://download.pytorch.org/whl/cu121
 
-# 2. the OpenMMLab stack and pure-python dependencies
+# 2. mmcv, built or fetched against the torch just installed (see note below),
+#    then the rest of the OpenMMLab stack and pure-python dependencies
+pip install mmcv==2.1.0 \
+    -f https://download.openmmlab.com/mmcv/dist/cu121/torch2.1/index.html \
+    || pip install --no-build-isolation mmcv==2.1.0
 pip install -r requirements.txt
 
 # 3. the SSM kernels, from git at a tag, against the installed torch
@@ -184,15 +188,24 @@ pip install mambavision
 #    See THIRD_PARTY.md for each repository and commit, and
 #    docker/Dockerfile.reconstructed for the kernel build commands.
 
-# 5. copy the backbone wrappers into the installed mmdet package
+# 5. copy the backbone wrappers into the installed mmdet package, and put
+#    the repository root on PYTHONPATH (the configs import their shared
+#    hooks as configs.Custom._base_palm.*)
 python tools/install_backbones.py
+export PYTHONPATH=$PWD:$PYTHONPATH
 ```
 
-Step 5 is required: the configs import the wrappers as
+Two notes on this sequence. mmcv must be able to see torch while it is
+installed: recent pip versions build every package in an isolated
+environment where torch is absent, and mmcv then installs *without* its
+CUDA ops and fails later at `from mmcv.ops import ...`. The command in
+step 2 takes OpenMMLab's prebuilt wheel for this torch/CUDA pair and
+falls back to a source build that can see the installed torch. Step 5 is
+required as well: the configs import the wrappers as
 `mmdet.models.backbones.*`, so the wrapper files must sit inside the
-installed mmdet package. A plain `pip install mmdet` does not know about
-them, and without this step every Mamba-family config fails to load.
-The Docker build performs this step automatically.
+installed mmdet package, and they import shared hooks as
+`configs.Custom._base_palm.*`, which needs the repository root on
+`PYTHONPATH`. The Docker build performs both automatically.
 
 `tools/train.py` and `tools/test.py` are vendored unchanged from
 MMDetection 3.3.0, so training commands run from the repository root
@@ -426,9 +439,9 @@ python -m palm_inference.run_inference \
 
 Three settings to check before trusting an output map:
 
-1. The CLI defaults (tile 512, overlap 128, threshold 0.35) are not the
-   deployment settings. Deployment used 1024 / 256 / 0.30, as above.
-   Omitting the flags succeeds and produces a different map.
+1. The tiling and threshold flags default to the deployment settings
+   (1024 / 256 / 0.30); they are written out above so the values are
+   visible. Changing any of them produces a different map.
 2. Without `--postprocess`, palms straddling tile boundaries are counted
    twice.
 3. The model was trained at roughly 15 cm/px. At 1 m/px a crown is a few

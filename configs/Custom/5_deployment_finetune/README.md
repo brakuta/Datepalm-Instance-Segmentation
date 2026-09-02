@@ -69,7 +69,8 @@ recall has not improved the model.
 ## Running the deployed model
 
 See the repository README, section "Inference with the deployed model".
-Note that the inference CLI defaults are not the deployment settings.
+The CLI defaults are the deployment settings (tile 1024, overlap 256,
+threshold 0.30).
 
 Four operational notes:
 
