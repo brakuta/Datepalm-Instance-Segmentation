@@ -39,7 +39,7 @@
 # =========================================================================
 
 schema_version: 1
-last_verified: "2026-08-31"
+last_verified: "2026-09-02"
 
 # -------------------------------------------------------------------------
 # UPSTREAM -- obtain from the author, verify by hash
@@ -62,7 +62,7 @@ upstream:
     repository: "https://github.com/MzeroMiko/VMamba.git"
     commit: "2ed52ead062a51a64521ed3871d52914bf532876"
     asset_url: UNKNOWN
-    sha256: UNKNOWN      # not captured before the machine was retired
+    sha256: "d855b57224a652bc692804932f88dc3a39b9028e64be99f745a7fd6792ca672a"
     licence: "MIT (Copyright (c) 2024 MzeroMiko)"
 
   - name: Spatial-Mamba-S (ImageNet-1k)
@@ -81,7 +81,7 @@ upstream:
     repository: "https://github.com/EdwardChasel/Spatial-Mamba.git"
     commit: "f72ed9b2486a5931190912dcfa8b964033c80e8c"
     asset_url: UNKNOWN
-    sha256: UNKNOWN      # not captured before the machine was retired
+    sha256: "b0027db8ffb8a12fdf0a9792c85121eee38ab8bd8e3ef80735161be2239654d6"
     licence: "Apache-2.0"
 
   - name: GroupMamba-S (ImageNet-1k)
@@ -100,7 +100,7 @@ upstream:
     repository: "https://github.com/Amshaker/GroupMamba.git"
     commit: "c1800ed262e995de3c645348e7e0202e8385f334"
     asset_url: UNKNOWN
-    sha256: UNKNOWN      # not captured before the machine was retired
+    sha256: "4c8e15f20d476ddd9080efa845be36e6f1e076721e087e88ebd276463e279425"
     licence: "MIT (Copyright (c) 2024 Abdelrahman Shaker)"
 
   - name: EfficientVMamba-B (ImageNet-1k)
@@ -133,7 +133,7 @@ upstream:
     repository: "https://github.com/TerryPei/EfficientVMamba.git"
     commit: "0bc5ee288b402d648641f5494b73e9d152e0c62b"
     asset_url: UNKNOWN
-    sha256: UNKNOWN      # not captured before the machine was retired
+    sha256: "05f2b836679f6f24cc9664f11912106d22dacbde53d09195e41e68500ff8bc67"
     licence: NONE_FOUND  # same situation as EfficientVMamba-B above
 
   - name: MambaVision-S
@@ -316,7 +316,7 @@ derived:
     from: spatialmamba/spatialmamba_small_in1k.pth
     why: as above, 8 channels -- used by maskrcnn_spatialmamba_s_staged_ms
     regenerate: python configs/Custom/tools_staged/inflate_stem_to_nband.py
-    sha256: UNKNOWN      # not captured before the machine was retired
+    sha256: "8a7c882d719759bbf96d1b1b175b955759e621e26334391f6c55a81c6138d5e0"
 
 # -------------------------------------------------------------------------
 # TRAINED IN THIS PROJECT -- not published

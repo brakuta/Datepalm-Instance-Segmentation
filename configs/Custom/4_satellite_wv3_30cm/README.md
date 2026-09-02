@@ -49,7 +49,9 @@ come from `tools_staged/compute_band_stats.py`.
 ## Order of operations
 
 1. `*_ge30sim_stage1.py`: simulated-30 cm pre-training (the prior for
-   arm `s`)
+   arm `s`). Four of the five configs were run in the reported work
+   (ConvNeXt-T, MambaVision-S, Spatial-Mamba-S, Swin-S); the PVTv2-B2
+   config is published but was not trained.
 2. `tools_staged/select_stagec_checkpoint.py`: choose the experiment 3
    checkpoint to transfer from (the prior for arms `c` and `cf`)
 3. `tools_staged/run_staged_matrix.sh <b0|c|cf|s|all>`: run the arms;
