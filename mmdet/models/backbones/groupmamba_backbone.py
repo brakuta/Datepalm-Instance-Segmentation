@@ -11,8 +11,9 @@
 #     them as a synthetic package `group_mamba_src` by absolute path so that
 #     (a) relative imports inside the repo resolve, and (b) no name collision
 #     occurs with VMamba's identically-named csms6s.py under /opt/vmamba.
-#   * Requires the CUDA kernel `selective_scan_cuda_oflex` to be built and
-#     importable (LD_LIBRARY_PATH must include torch/lib).
+#   * Requires the CUDA kernel `selective_scan_cuda_core`: upstream csms6s.py
+#     calls it directly, so the oflex variant alone is not enough. The
+#     Dockerfile builds it from VMamba's kernels/selective_scan.
 # =============================================================================
 
 import sys

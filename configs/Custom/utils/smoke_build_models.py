@@ -17,7 +17,9 @@ WHY THIS EXISTS
 
   So this builds each model from its real config and runs one forward pass
   on a dummy image. No checkpoint, no data, no GPU-hours -- it is the
-  cheapest test that exercises the code path a real job depends on.
+  cheapest test that exercises the code path a real job depends on. The
+  ImageNet weights each config names are deliberately not loaded here;
+  training still needs them under checkpoints/ (see weights.yaml).
 
 WHAT A FAILURE HERE MEANS
   A backbone that fails is a backbone this machine cannot run. That is
@@ -51,7 +53,16 @@ def build_and_run(cfg_path, size, device):
 
     t0 = time.time()
     try:
-        model = init_detector(cfg_path, None, device=device)
+        # Build without pretrained weights. The test is about the compiled
+        # kernels, and it must not depend on ImageNet files under
+        # checkpoints/ or on a reachable HuggingFace Hub. The wrappers that
+        # take a path get None; the ones that take a flag get False.
+        from mmengine.config import Config
+        cfg = Config.fromfile(cfg_path)
+        bb = cfg.model.backbone
+        if 'pretrained' in bb:
+            bb.pretrained = False if isinstance(bb.pretrained, bool) else None
+        model = init_detector(cfg, None, device=device)
     except Exception as exc:                                   # noqa: BLE001
         return FAIL, f'build failed: {type(exc).__name__}: {exc}', time.time() - t0
 

@@ -89,7 +89,7 @@ PRIVATE = [
 ]
 # Spans that legitimately look path-shaped are removed before matching, so
 # a URL earlier on the line cannot hide a private path after it.
-ALLOW_SPAN = re.compile(r'https?://\S+|/path/to/\S*|<[a-z_ -]+>', re.I)
+ALLOW_SPAN = re.compile(r'https?://\S+|[\\/]path[\\/]to[\\/]\S*|<[a-z_ -]+>', re.I)
 ALLOW_LINE = re.compile(r'noqa:\s*leakscan', re.I)
 
 ARTEFACTS = ('*.pth', '*.ckpt', '*.pkl', '*.npy', '*.tif', '*.tiff',

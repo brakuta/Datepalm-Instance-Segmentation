@@ -195,13 +195,17 @@ def check_extensions():
     """Compiled CUDA kernels. A missing one is not an error -- the code falls
     back to a slower path silently -- so it has to be reported, or a user
     concludes the hardware is slow."""
+    # "required" means a backbone wrapper refuses to build without it.
     wanted = {
         'mmcv._ext': ('required', 'The core operations used by every model.'),
         'selective_scan_cuda_oflex': (
-            'optional', 'Fast kernel for the Mamba-family models.'),
+            'required', 'VMamba, EfficientVMamba and MSVMamba kernel.'),
+        'selective_scan_cuda_core': ('required', 'GroupMamba kernel.'),
+        'selective_scan_cuda_oflex_rh': ('required', 'Spatial-Mamba kernel.'),
+        'dwconv2d': ('required', 'Spatial-Mamba depthwise convolution.'),
         'selective_scan_cuda': ('optional', 'Alternative fast Mamba kernel.'),
-        'mamba_ssm': ('optional', 'Mamba support library.'),
-        'causal_conv1d': ('optional', 'Mamba support library.'),
+        'mamba_ssm': ('required', 'MambaVision kernel and support library.'),
+        'causal_conv1d': ('required', 'Mamba support library.'),
     }
     missing_required, missing_optional = [], []
     for mod, (need, what) in wanted.items():

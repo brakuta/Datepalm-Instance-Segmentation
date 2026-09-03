@@ -38,7 +38,7 @@ retrain every model and reproduce the evaluation is here.
 
 ## 1. Quick start
 
-**Step 1. Clone and build the environment** (1–2 hours; kernel
+**Step 1. Clone and build the environment** (about an hour; kernel
 compilation dominates):
 
 ```bash
@@ -60,6 +60,29 @@ docker run --gpus all -it --shm-size=16g \
 The image is built from your checkout, so edits made before the build
 (section 4) are inside it. The third mount keeps training outputs when
 the container is removed.
+
+<details>
+<summary>On Windows</summary>
+
+Run steps 1 and 2 from PowerShell with Docker Desktop running; the
+`docker` command is available there directly. Use Windows paths for
+the host side of each mount and a backtick for line continuation:
+
+```powershell
+docker build -f docker/Dockerfile.reconstructed -t mamba-mmdet:rebuilt .
+docker run --gpus all -it --shm-size=16g `
+    -v C:\path\to\datasets:/workspace/datasets `
+    -v C:\path\to\checkpoints:/workspace/Datepalm-Instance-Segmentation/checkpoints `
+    -v C:\path\to\work_dirs:/workspace/Datepalm-Instance-Segmentation/work_dirs `
+    mamba-mmdet:rebuilt
+```
+
+Everything from step 3 onwards runs inside the container and is the
+same on every host. If Git is not installed, download the repository
+as a ZIP from GitHub and unpack it; the build does not need the `.git`
+directory.
+
+</details>
 
 **Step 3. Verify the installation** (inside the container; this needs
 no data, so run it before anything else; two of the models download
@@ -100,7 +123,7 @@ its own README:
 | **1** | [`1_single_sensor_uav_5cm/`](configs/Custom/1_single_sensor_uav_5cm) | backbone benchmark on a fixed sensor | UAV, 5 cm | 18 |
 | **2** | [`2_pooled_15cm_ge_aerial/`](configs/Custom/2_pooled_15cm_ge_aerial) | two 15 cm sources pooled | Google Earth + aerial | 10 |
 | **3** | [`3_unified_multisource/`](configs/Custom/3_unified_multisource) | one model on all three sources | UAV + GE + aerial | 11 |
-| **4** | [`4_satellite_wv3_30cm/`](configs/Custom/4_satellite_wv3_30cm) | satellite transfer with a simulation prior and an annotation-budget ladder | WorldView-3, 30 cm | 24 |
+| **4** | [`4_satellite_wv3_30cm/`](configs/Custom/4_satellite_wv3_30cm) | satellite transfer from three initialisations, plus 8-band multispectral | WorldView-3, 30 cm | 24 |
 | **5** | [`5_deployment_finetune/`](configs/Custom/5_deployment_finetune) | hard-negative adaptation of the deployed model | GE, 15 cm, national | 4 |
 
 Supporting code:
@@ -153,6 +176,11 @@ Reference documents at the root:
 | mmengine / mmcv / mmdet / mmpretrain | 0.10.1 / 2.1.0 / 3.3.0 / 1.2.0 |
 | mamba-ssm / causal-conv1d | 2.2.4 / 1.4.0 |
 
+Last verified 2026-09-02: a clean build of this repository on Docker
+Desktop for Windows, with no GPU visible to the build, followed by both
+checks in section 3.4 on a TITAN RTX (sm_75). All 28 environment checks
+passed and all 11 experiment 3 models built and ran a forward pass.
+
 Three dependencies compile CUDA extensions against a specific torch/CUDA
 pair: `mmcv 2.1.0` (source-only on PyPI), `mamba-ssm 2.2.4` and
 `causal-conv1d 1.4.0`, plus the `selective_scan` and `dwconv2d` kernels
@@ -168,9 +196,23 @@ docker build -f docker/Dockerfile.reconstructed -t mamba-mmdet:rebuilt .
 [`docker/Dockerfile.reconstructed`](docker/Dockerfile.reconstructed) is
 pinned to the exact commits used in this work and performs all of the
 steps below in the right order, including cloning the upstream backbone
-repositories to `/opt` and compiling their kernels. The `docker run`
-command with the expected mount points is documented at the end of the
-file and in the quick start above.
+repositories to `/opt` and compiling their kernels. No GPU is needed
+during the build: the kernels are compiled for every architecture in
+`TORCH_CUDA_ARCH_LIST` (sm_75 to sm_90) and are checked on the GPU
+afterwards by the two commands in section 3.4. The `docker run` command
+with the expected mount points is documented at the end of the file and
+in the quick start above.
+
+Three upstream kernel sources need a small edit before they compile in
+this environment. The Dockerfile applies each edit with `sed` at the step
+where it is needed, explains it in a comment there, and stops the build
+if the upstream file has changed so that an edit no longer lands. The
+same edits are listed under manual installation below.
+
+Keep a copy of a working image. The CUDA base image prints a deprecation
+notice at start-up and NVIDIA schedules such tags for deletion, so once
+the checks in section 3.4 pass, run `docker save mamba-mmdet:rebuilt -o
+mamba-mmdet-rebuilt.tar` or push the image to a registry you control.
 
 ### 3.3 Manual installation
 
@@ -178,6 +220,15 @@ Follow this order. It matters, because mmcv compiles against whatever
 torch it finds:
 
 ```bash
+# 0. pins that every later pip call must respect. NumPy must stay below 2
+#    (torch 2.1.0 cannot exchange tensors with NumPy 2, and nothing in the
+#    package metadata says so); timm must stay at 1.0.15 (two upstream
+#    requirements files pin 0.4.12, which MambaVision and MambaOut cannot use)
+printf '%s\n' 'numpy<2' 'torch==2.1.0' 'torchvision==0.16.0' \
+    'torchaudio==2.1.0' 'timm==1.0.15' 'mmengine==0.10.1' \
+    'transformers==4.50.0' > pip-constraints.txt
+export PIP_CONSTRAINT=$PWD/pip-constraints.txt
+
 # 1. torch first, from the cu121 index
 pip install torch==2.1.0 torchvision==0.16.0 \
     --index-url https://download.pytorch.org/whl/cu121
@@ -201,6 +252,9 @@ pip install mambavision
 #    /opt/vmamba /opt/spatial_mamba /opt/groupmamba /opt/efficientvmamba
 #    See THIRD_PARTY.md for each repository and commit, and
 #    docker/Dockerfile.reconstructed for the kernel build commands.
+#    Install Spatial-Mamba's and VSSD's requirements files without their
+#    timm line, then apply the three edits in the table below and build
+#    the kernels with --no-build-isolation.
 
 # 5. copy the backbone wrappers into the installed mmdet package, and put
 #    the repository root on PYTHONPATH (the configs import their shared
@@ -208,6 +262,15 @@ pip install mambavision
 python tools/install_backbones.py
 export PYTHONPATH=$PWD:$PYTHONPATH
 ```
+
+The three upstream edits in step 4, each applied by the Dockerfile with
+the reason in a comment beside it:
+
+| file | edit | why |
+|---|---|---|
+| `/opt/vmamba/kernels/selective_scan/setup.py` | disable the compute-capability query and drop the `-arch=sm_XX` flag | the query needs a GPU, and the flag makes torch ignore `TORCH_CUDA_ARCH_LIST` |
+| same file | `MODES = ["core", "oflex"]` instead of `["oflex"]` | GroupMamba calls the `core` variant directly |
+| `/opt/spatial_mamba/kernels/dwconv2d/depthwise_fwd/launch.cu` | add `#include <ATen/core/grad_mode.h>` after the ATen include | `at::NoGradGuard` is no longer reachable through `ATen/ATen.h` in torch 2.1 |
 
 Two notes on this sequence. mmcv must be able to see torch while it is
 installed: recent pip versions build every package in an isolated
@@ -232,12 +295,18 @@ python configs/Custom/utils/handover_selftest.py     # imports, versions, GPU vi
 python configs/Custom/utils/smoke_build_models.py    # builds each model, one forward pass
 ```
 
-Run both. The first checks the imports; the second pushes a tensor
-through every model, which is the step that catches a kernel compiled
-for the wrong GPU architecture. If you see `no kernel image is available for
-execution on the device`, rebuild the kernels with a wider
-`TORCH_CUDA_ARCH_LIST` (the Dockerfile sets
-`7.5;8.0;8.6;8.9;9.0+PTX`).
+Run both inside the container, started with `--gpus all`. The first
+checks the imports, the versions, GPU visibility, and that every
+compiled kernel a backbone wrapper needs is present; it should end with
+`Everything passed`. The second builds every experiment 3 model, without
+pretrained weights, and pushes a tensor through each backbone; it should
+end with `11 of 11 model(s) built and ran`. That second step is the one
+that catches a kernel compiled for the wrong GPU architecture. If you see
+`no kernel image is available for execution on the device`, rebuild the
+kernels with a wider `TORCH_CUDA_ARCH_LIST` (the Dockerfile sets
+`7.5;8.0;8.6;8.9;9.0+PTX`). MambaVision fetches its model code and
+configuration from HuggingFace the first time it is built, so that run
+needs network access once.
 
 ### 3.5 Pretrained backbone weights
 

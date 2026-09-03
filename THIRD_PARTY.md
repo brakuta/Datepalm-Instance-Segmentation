@@ -38,12 +38,19 @@ repository contain no architecture code.
 - <https://github.com/MzeroMiko/VMamba>
 - commit `2ed52ead062a51a64521ed3871d52914bf532876`
 - MIT, Copyright (c) 2024 MzeroMiko
+- Build-time edit to `kernels/selective_scan/setup.py`: no GPU query,
+  torch's own architecture flags, and the `core` and `oflex`
+  variants. Applied and explained in `docker/Dockerfile.reconstructed`.
 
 ### Spatial-Mamba (`/opt/spatial_mamba`)
 - <https://github.com/EdwardChasel/Spatial-Mamba>
 - commit `f72ed9b2486a5931190912dcfa8b964033c80e8c`
 - Apache-2.0
 - *Provides the backbone of the deployed model.*
+- Build-time edit to `kernels/dwconv2d/depthwise_fwd/launch.cu`: one
+  added include so it compiles against torch 2.1. Its `requirements.txt`
+  is installed without the `timm==0.4.12` line. Both applied and
+  explained in `docker/Dockerfile.reconstructed`.
 
 ### GroupMamba (`/opt/groupmamba`)
 - <https://github.com/Amshaker/GroupMamba>

@@ -68,7 +68,7 @@ model = dict(
         # freezing policies to prevent undertraining confounds in the
         # architecture comparison.
         frozen_stages=0,
-        local_files_only=True,   # ← add this line for testing
+        local_files_only=False,
     ),
     neck=dict(
         _delete_=True,

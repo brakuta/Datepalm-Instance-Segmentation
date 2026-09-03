@@ -43,7 +43,7 @@ model = dict(
         # Gradient checkpointing provides sufficient VRAM headroom for
         # full fine-tuning even on the Small variant.
         frozen_stages=0,
-        local_files_only=True,   # ← add this line
+        local_files_only=False,
     ),
     neck=dict(
         _delete_=True,

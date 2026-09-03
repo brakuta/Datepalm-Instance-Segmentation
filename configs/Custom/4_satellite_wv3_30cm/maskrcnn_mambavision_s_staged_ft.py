@@ -64,7 +64,7 @@ model = dict(
         drop_path_rate=0.2,
         frozen_stages=2,          # v3 locked recipe: partial unfreeze
         gradient_checkpointing=False,
-        local_files_only=True,
+        local_files_only=False,
     ),
     neck=dict(
         _delete_=True,
