@@ -592,8 +592,10 @@ projects listed in [`THIRD_PARTY.md`](THIRD_PARTY.md):
 }
 ```
 
-The repository is Apache-2.0, inherited from MMDetection
-([`LICENSE`](LICENSE)). Upstream backbones carry their own terms; note in
+The repository is released under Apache-2.0 ([`LICENSE`](LICENSE)).
+`tools/train.py` and `tools/test.py` are vendored unchanged from
+MMDetection and remain OpenMMLab's copyright, as recorded in
+[`NOTICE`](NOTICE). Upstream backbones carry their own terms; note in
 particular that MambaVision is released by NVIDIA under a non-commercial
 licence, which applies to MambaVision only. Wrappers in
 `mmdet/models/backbones/` adapt the upstream implementations, which are

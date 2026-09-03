@@ -1,0 +1,16 @@
+Date-palm instance segmentation across sensors and scales
+Copyright 2026 Mohamed Barakat A. Gibril
+
+This repository is released under the Apache License, Version 2.0 (see
+LICENSE). It is built on MMDetection and includes the following files
+vendored unchanged from MMDetection v3.3.0, which remain
+Copyright 2018-2023 OpenMMLab and are likewise licensed under Apache-2.0:
+
+    tools/train.py
+    tools/test.py
+
+The backbone wrappers in mmdet/models/backbones/ adapt upstream
+implementations that are not redistributed here; each is loaded from its
+own repository at a pinned commit under its own licence. THIRD_PARTY.md
+lists every upstream project, the commit used, and its licence, including
+the non-commercial licence that applies to MambaVision only.
