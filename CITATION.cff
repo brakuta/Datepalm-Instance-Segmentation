@@ -13,6 +13,16 @@ authors:
 type: software
 license: Apache-2.0
 repository-code: "https://github.com/brakuta/Datepalm-Instance-Segmentation"
+version: 1.0.0
+date-released: "2026-09-03"
+doi: 10.5281/zenodo.22275654
+identifiers:
+  - type: doi
+    value: 10.5281/zenodo.22275654
+    description: Concept DOI; resolves to the newest release
+  - type: doi
+    value: 10.5281/zenodo.22275655
+    description: Release v1.0.0
 abstract: >-
   Mask R-CNN with ten interchangeable backbone architectures evaluated on date-palm
   crown instance segmentation from 5 cm UAV to 30 cm satellite imagery,

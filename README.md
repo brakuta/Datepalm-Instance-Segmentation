@@ -7,6 +7,7 @@ transformer and state-space) in eighteen size variants, benchmarked on
 date-palm crown delineation from 5 cm UAV imagery to 30 cm satellite
 imagery, and adapted into a country-scale palm inventory.**
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.22275654.svg)](https://doi.org/10.5281/zenodo.22275654)
 [![validate](https://github.com/brakuta/Datepalm-Instance-Segmentation/actions/workflows/validate.yml/badge.svg)](https://github.com/brakuta/Datepalm-Instance-Segmentation/actions/workflows/validate.yml)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/Python-3.10-3776AB.svg)](docker/Dockerfile.reconstructed)
@@ -579,11 +580,27 @@ Run it before opening a pull request; `CONTRIBUTING.md` has the rest.
 
 ## 10. Citation and licence
 
-Until the manuscript is published, please cite this repository (see
-`CITATION.cff`), along with MMDetection and the upstream backbone
-projects listed in [`THIRD_PARTY.md`](THIRD_PARTY.md):
+The code is archived on Zenodo. The DOI 10.5281/zenodo.22275654
+covers every version and always resolves to the newest one; each
+release also has its own DOI (v1.0.0 is 10.5281/zenodo.22275655).
+Until the manuscript is published, please cite the repository through
+that record, along with MMDetection and the upstream backbone projects
+listed in [`THIRD_PARTY.md`](THIRD_PARTY.md). `CITATION.cff` carries
+the same details and GitHub's "Cite this repository" button formats
+them.
 
 ```bibtex
+@software{gibril2026datepalm,
+  author    = {Gibril, Mohamed Barakat A.},
+  title     = {Date-palm instance segmentation across sensors and scales:
+               CNN, transformer and state-space backbones},
+  year      = {2026},
+  version   = {v1.0.0},
+  publisher = {Zenodo},
+  doi       = {10.5281/zenodo.22275654},
+  url       = {https://github.com/brakuta/Datepalm-Instance-Segmentation}
+}
+
 @article{mmdetection,
   title   = {{MMDetection}: Open MMLab Detection Toolbox and Benchmark},
   author  = {Chen, Kai and Wang, Jiaqi and Pang, Jiangmiao and others},
